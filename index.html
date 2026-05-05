@@ -258,6 +258,109 @@
         /* AI gradient text */
         .ai-label { background: linear-gradient(135deg, #7c3aed, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
+        /* ── BOTTOM NAV FAB ── */
+        .nav-fab-wrapper {
+            position: relative;
+            flex: 0 0 auto;
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 6px;
+            cursor: pointer;
+        }
+        /* Lingkaran putih background di belakang FAB */
+        .nav-fab-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+            z-index: 0;
+        }
+        .nav-fab {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            box-shadow: 0 8px 28px rgba(30,64,175,0.55), 0 2px 8px rgba(30,64,175,0.3);
+            display: flex; align-items: center; justify-content: center;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: transform 0.18s, box-shadow 0.18s;
+            position: relative;
+            top: -22px;
+            z-index: 1;
+        }
+        .nav-fab:active { transform: scale(0.92); box-shadow: 0 4px 12px rgba(30,64,175,0.4); }
+        .nav-fab i { font-size: 22px; color: white; }
+        .nav-fab-text {
+            font-size: 10px; font-weight: 700;
+            color: var(--primary); line-height: 1;
+            position: relative; top: -18px;
+            z-index: 1;
+        }
+        .nav-fab-wrapper.active .nav-fab {
+            background: linear-gradient(135deg, #1e3a8a 0%, #4f46e5 100%);
+            box-shadow: 0 8px 28px rgba(79,70,229,0.6);
+        }
+        .nav-fab-wrapper.active .nav-fab-text { color: #4f46e5; }
+
+        /* ── PROFILE PAGE ── */
+        .profile-avatar {
+            width: 88px; height: 88px; border-radius: 50%;
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; color: white; font-weight: 800;
+            box-shadow: 0 8px 32px rgba(30,64,175,0.3);
+            border: 4px solid white;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #7c3aed 100%);
+            border-radius: 20px; padding: 28px 20px 24px;
+            position: relative; overflow: hidden;
+        }
+        .profile-header::before {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 150px; height: 150px; border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .profile-field-card {
+            background: white; border-radius: 16px;
+            border: 1.5px solid var(--border);
+            padding: 16px 18px; margin-bottom: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .profile-field-card:focus-within {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .profile-field-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+            text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .profile-field-input {
+            width: 100%; border: none; outline: none;
+            font-family: var(--font); font-size: 14px; font-weight: 600;
+            color: var(--text); background: transparent;
+            padding: 0; resize: none;
+        }
+        .profile-save-btn {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white; font-weight: 800; font-size: 14px;
+            border: none; border-radius: 16px; padding: 16px;
+            width: 100%; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(30,64,175,0.35);
+            transition: all 0.2s; letter-spacing: 0.03em;
+        }
+        .profile-save-btn:active { transform: translateY(1px); box-shadow: 0 3px 10px rgba(30,64,175,0.25); }
+
         /* ── LOWONGAN TUTOR ── */
         .lowongan-card {
             background: white;
@@ -741,7 +844,7 @@
 
                 <!-- ===== INPUT SESI ===== -->
                 <div id="pageInputSesi" class="page-content hide">
-                    <h2 class="text-xl font-extrabold text-gray-900 mb-5 tracking-tight">Input Sesi Les</h2>
+                    <h2 class="text-xl font-extrabold text-gray-900 mb-5 tracking-tight"><i class="fa-solid fa-clipboard-check text-blue-500 mr-2"></i>Absen / Input Sesi</h2>
                     <form id="formSesi" onsubmit="handleSaveSesi(event)" class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
                         <input type="hidden" id="sesiId">
                         <div class="mb-5">
@@ -810,9 +913,8 @@
                         </button>
                     </div>
 
-                    <div id="rekapMotivasiCard" class="hide mb-5"
-                        style="background:linear-gradient(135deg,#f97316,#ec4899);border-radius:20px"
-                        class="p-6 text-white flex items-center justify-between shadow-lg">
+                    <div id="rekapMotivasiCard" class="hide mb-5 p-6 text-white flex items-center justify-between shadow-lg"
+                        style="background:linear-gradient(135deg,#f97316,#ec4899);border-radius:20px">
                         <div class="p-5">
                             <h3 class="font-bold text-xl mb-1 text-white">Ayo Semangat! 💪</h3>
                             <p class="text-white/90 text-sm font-medium" id="rekapMotivasiText">Tugas kamu tinggal X pertemuan lagi.</p>
@@ -927,13 +1029,63 @@
                             </div>
                         </div>
                     </div>
+                </div><!-- /pageRekap -->
+
+                <!-- ===== PROFIL GURU ===== -->
+                <div id="pageProfil" class="page-content hide">
+                    <!-- Profile Header -->
+                    <div class="profile-header text-white mb-5 flex flex-col items-center text-center relative z-10">
+                        <div class="profile-avatar mb-3" id="profileAvatar">?</div>
+                        <h2 class="font-extrabold text-xl tracking-tight" id="profileNameDisplay">–</h2>
+                        <p class="text-blue-200 text-xs mt-1 font-medium" id="profileRoleDisplay">Tutor</p>
+                        <div class="mt-2 bg-white/15 border border-white/20 rounded-full px-4 py-1.5 text-xs font-bold" id="profileUsernameDisplay">@username</div>
+                    </div>
+
+                    <!-- Edit Form -->
+                    <div class="space-y-3 pb-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-4">Informasi Profil</p>
+
+                        <div class="profile-field-card">
+                            <div class="profile-field-label"><i class="fa-solid fa-user text-blue-400 mr-2"></i>Nama Lengkap</div>
+                            <input type="text" id="profilNama" class="profile-field-input" placeholder="Nama lengkap Anda">
+                        </div>
+
+                        <div class="profile-field-card">
+                            <div class="profile-field-label"><i class="fa-solid fa-phone text-blue-400 mr-2"></i>Nomor HP / WhatsApp</div>
+                            <input type="tel" id="profilNoHp" class="profile-field-input" placeholder="Cth: 08123456789">
+                        </div>
+
+                        <div class="profile-field-card">
+                            <div class="profile-field-label"><i class="fa-solid fa-location-dot text-blue-400 mr-2"></i>Alamat Tinggal</div>
+                            <textarea id="profilAlamat" rows="2" class="profile-field-input" placeholder="Alamat lengkap tempat tinggal Anda"></textarea>
+                        </div>
+
+                        <div class="profile-field-card">
+                            <div class="profile-field-label"><i class="fa-solid fa-book-open text-blue-400 mr-2"></i>Mata Pelajaran yang Dikuasai</div>
+                            <input type="text" id="profilMapel" class="profile-field-input" placeholder="Cth: Matematika, Fisika, Kimia">
+                        </div>
+
+                        <div class="profile-field-card">
+                            <div class="profile-field-label"><i class="fa-solid fa-map text-blue-400 mr-2"></i>Daerah yang Dijangkau</div>
+                            <input type="text" id="profilDaerah" class="profile-field-input" placeholder="Cth: Soreang, Margahayu, Kopo">
+                        </div>
+
+                        <div class="profile-field-card">
+                            <div class="profile-field-label"><i class="fa-solid fa-pen-to-square text-blue-400 mr-2"></i>Bio / Deskripsi Singkat <span class="text-gray-400 normal-case ml-1 font-normal">(opsional)</span></div>
+                            <textarea id="profilBio" rows="3" class="profile-field-input" placeholder="Ceritakan sedikit tentang pengalaman atau keahlian mengajar Anda..."></textarea>
+                        </div>
+
+                        <button onclick="saveProfil()" class="profile-save-btn mt-2">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i> Simpan Perubahan
+                        </button>
+                    </div>
                 </div>
 
             </div>
         </div>
 
         <!-- Bottom Nav -->
-        <div class="flex-none w-full bg-white border-t border-gray-100 flex justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-50 px-1 pt-1 pb-safe" id="mobileNav"></div>
+        <div class="flex-none w-full bg-white border-t border-gray-100 flex justify-around items-end shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-50 px-1 pb-safe" style="min-height:68px;padding-top:0;overflow:visible" id="mobileNav"></div>
     </div>
 </div>
 
@@ -1254,7 +1406,8 @@ async function apiCall(action, payload = {}) {
             const { error } = await dbClient.from('users').insert([{
                 id_user: "U" + Date.now(), username: payload.username, password: payload.password,
                 role: "guru", nama_lengkap: payload.nama_lengkap, status_aktif: "aktif",
-                assigned_siswa: payload.assigned_siswa
+                assigned_siswa: payload.assigned_siswa,
+                no_hp: '', alamat: '', mapel: '', daerah: '', bio: ''
             }]);
             if (error) throw error;
             return true;
@@ -1649,30 +1802,25 @@ async function initApp() {
 // NAVIGATION
 // ============================================================
 function buildNavigation() {
-    const menus = [
-        { id: 'dashboard', icon: 'fa-home', text: 'Beranda', access: 'all' },
-        { id: 'guru', icon: 'fa-chalkboard-user', text: 'Guru', access: 'admin' },
-        { id: 'siswa', icon: 'fa-users', text: 'Siswa', access: 'admin' },
-        { id: 'input', icon: 'fa-edit', text: 'Input Sesi', access: 'guru' },
-        { id: 'rekap', icon: 'fa-chart-bar', text: 'Rekap', access: 'all' },
-    ];
     let mNav = '';
-    menus.forEach(m => {
-        if (m.access === 'all' || (m.access === 'guru' && currentUser.role === 'guru') || (m.access === 'admin' && currentUser.role === 'admin')) {
-            mNav += `
-                <button onclick="navigate('${m.id}')" id="nav-m-${m.id}"
-                    class="nav-btn flex-1 flex flex-col items-center justify-center py-2 text-gray-500 font-semibold hover:text-blue-600 transition-colors">
-                    <div id="nav-icon-bg-${m.id}" class="nav-pill px-4 py-1.5 rounded-full transition-colors duration-200 mb-0.5">
-                        <i class="fa-solid ${m.icon} text-base"></i>
-                    </div>
-                    <span class="text-[10px] whitespace-nowrap">${m.text}</span>
-                </button>`;
-        }
-    });
+
+    if (currentUser.role === 'guru') {
+        // GURU NAV: Beranda | Rekap | [FAB Absen] | Profil | Keluar
+        mNav += navBtn('dashboard', 'fa-home', 'Beranda');
+        mNav += navBtn('rekap', 'fa-chart-bar', 'Rekap');
+        mNav += navFAB('input', 'fa-clipboard-check', 'Absen');
+        mNav += navBtn('profil', 'fa-user-circle', 'Profil');
+    } else {
+        // ADMIN NAV: Beranda | Siswa | [FAB Guru] | Rekap | Keluar
+        mNav += navBtn('dashboard', 'fa-home', 'Beranda');
+        mNav += navBtn('siswa', 'fa-users', 'Siswa');
+        mNav += navFAB('guru', 'fa-chalkboard-user', 'Guru');
+        mNav += navBtn('rekap', 'fa-chart-bar', 'Rekap');
+    }
     mNav += `
         <button onclick="logout()"
-            class="flex-1 flex flex-col items-center justify-center py-2 text-red-400 font-semibold hover:text-red-600 transition-colors">
-            <div class="px-4 py-1.5 rounded-full hover:bg-red-50 transition-colors mb-0.5">
+            class="flex-1 flex flex-col items-center justify-center pb-1 pt-2 text-red-400 font-semibold hover:text-red-600 transition-colors">
+            <div class="px-3 py-1.5 rounded-full hover:bg-red-50 transition-colors mb-0.5">
                 <i class="fa-solid fa-sign-out-alt text-base"></i>
             </div>
             <span class="text-[10px] whitespace-nowrap">Keluar</span>
@@ -1680,12 +1828,38 @@ function buildNavigation() {
     document.getElementById('mobileNav').innerHTML = mNav;
 }
 
+function navBtn(id, icon, text) {
+    return `
+        <button onclick="navigate('${id}')" id="nav-m-${id}"
+            class="nav-btn flex-1 flex flex-col items-center justify-end pb-1 pt-2 text-gray-500 font-semibold hover:text-blue-600 transition-colors">
+            <div id="nav-icon-bg-${id}" class="nav-pill px-3 py-1.5 rounded-full transition-colors duration-200 mb-0.5">
+                <i class="fa-solid ${icon} text-base"></i>
+            </div>
+            <span class="text-[10px] whitespace-nowrap">${text}</span>
+        </button>`;
+}
+
+function navFAB(id, icon, text) {
+    return `
+        <div class="nav-fab-wrapper" id="nav-m-${id}" onclick="navigate('${id}')">
+            <button class="nav-fab" id="nav-fab-btn-${id}" tabindex="-1">
+                <i class="fa-solid ${icon}"></i>
+            </button>
+            <span class="nav-fab-text" id="nav-fab-text-${id}">${text}</span>
+        </div>`;
+}
+
 function navigate(page) {
     document.querySelectorAll('.page-content').forEach(el => el.classList.add('hide'));
     document.querySelectorAll('[id^="nav-m-"]').forEach(el => {
-        el.classList.remove('text-blue-600'); el.classList.add('text-gray-500');
+        el.classList.remove('text-blue-600', 'active'); el.classList.add('text-gray-500');
     });
     document.querySelectorAll('[id^="nav-icon-bg-"]').forEach(el => el.classList.remove('bg-blue-50', 'text-blue-600'));
+    // Reset FAB styles
+    document.querySelectorAll('[id^="nav-fab-btn-"]').forEach(el => {
+        el.style.background = '';
+        el.style.boxShadow = '';
+    });
 
     let targetId = '';
     if (page === 'dashboard') { targetId = 'pageDashboard'; loadDashboard(); }
@@ -1693,17 +1867,18 @@ function navigate(page) {
     if (page === 'siswa') { targetId = 'pageDataSiswa'; loadDataSiswaPage(); }
     if (page === 'input') { targetId = 'pageInputSesi'; document.getElementById('sesiTanggal').valueAsDate = new Date(); }
     if (page === 'rekap') { targetId = 'pageRekap'; populateFilterSiswa(); loadRiwayat(); }
+    if (page === 'profil') { targetId = 'pageProfil'; loadProfil(); }
     if (targetId) document.getElementById(targetId).classList.remove('hide');
 
     const mBtn = document.getElementById(`nav-m-${page}`);
     const mBg = document.getElementById(`nav-icon-bg-${page}`);
-    if (mBtn) { mBtn.classList.remove('text-gray-500'); mBtn.classList.add('text-blue-600'); }
+    if (mBtn) {
+        mBtn.classList.remove('text-gray-500');
+        mBtn.classList.add('text-blue-600', 'active');
+    }
     if (mBg) mBg.classList.add('bg-blue-50', 'text-blue-600');
     scrollToTop();
 }
-
-// ============================================================
-// DASHBOARD
 // ============================================================
 async function loadDashboard() {
     showLoading(true);
@@ -1987,11 +2162,57 @@ async function handleSaveSesi(e) {
     showLoading(false);
 }
 
-function resetFormSesi() {
-    document.getElementById('sesiId').value = "";
-    document.getElementById('formSesi').reset();
-    document.getElementById('sesiTanggal').valueAsDate = new Date();
+// ============================================================
+// PROFIL GURU
+// ============================================================
+function loadProfil() {
+    if (!currentUser) return;
+    const nama = currentUser.nama_lengkap || '';
+    const initials = nama.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2) || '?';
+    document.getElementById('profileAvatar').innerText = initials;
+    document.getElementById('profileNameDisplay').innerText = nama || '–';
+    document.getElementById('profileRoleDisplay').innerText = currentUser.role === 'admin' ? 'Administrator' : 'Tutor / Guru';
+    document.getElementById('profileUsernameDisplay').innerText = '@' + (currentUser.username || '');
+
+    document.getElementById('profilNama').value = nama;
+    document.getElementById('profilNoHp').value = currentUser.no_hp || '';
+    document.getElementById('profilAlamat').value = currentUser.alamat || '';
+    document.getElementById('profilMapel').value = currentUser.mapel || '';
+    document.getElementById('profilDaerah').value = currentUser.daerah || '';
+    document.getElementById('profilBio').value = currentUser.bio || '';
 }
+
+async function saveProfil() {
+    const nama = document.getElementById('profilNama').value.trim();
+    if (!nama) { showToast("Nama tidak boleh kosong!", "error"); return; }
+    const payload = {
+        nama_lengkap: nama,
+        no_hp: document.getElementById('profilNoHp').value.trim(),
+        alamat: document.getElementById('profilAlamat').value.trim(),
+        mapel: document.getElementById('profilMapel').value.trim(),
+        daerah: document.getElementById('profilDaerah').value.trim(),
+        bio: document.getElementById('profilBio').value.trim()
+    };
+    showLoading(true, "Menyimpan profil...");
+    try {
+        const { error } = await dbClient.from('users').update(payload).eq('username', currentUser.username);
+        if (error) throw error;
+        // Update local currentUser
+        Object.assign(currentUser, payload);
+        localStorage.setItem('les_user', JSON.stringify(currentUser));
+        // Update header display
+        document.getElementById('desktopUserName').innerText = nama;
+        document.getElementById('mobileUserName').innerText = nama;
+        // Refresh profile header
+        loadProfil();
+        showToast("Profil berhasil disimpan! ✅");
+    } catch (e) {
+        showToast("Gagal menyimpan: " + e.message, "error");
+    }
+    showLoading(false);
+}
+
+
 
 async function loadRiwayat() {
     showLoading(true);
