@@ -1302,6 +1302,38 @@ async function apiCall(action, payload = {}) {
             if (error) throw error;
             return true;
         }
+        // ── LOWONGAN TUTOR ──
+        else if (action === 'getLowongan') {
+            const { data, error } = await dbClient.from('lowongan_tutor').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            return data || [];
+        }
+        else if (action === 'saveLowongan') {
+            const row = {
+                id_lowongan: payload.id_lowongan,
+                posisi: payload.posisi,
+                lokasi: payload.lokasi || null,
+                status: payload.status || 'open',
+                keterangan: payload.keterangan || null,
+                kontak: payload.kontak || null,
+                deadline: payload.deadline || null,
+            };
+            // Cek apakah sudah ada (update) atau baru (insert)
+            const { data: existing } = await dbClient.from('lowongan_tutor').select('id_lowongan').eq('id_lowongan', payload.id_lowongan).maybeSingle();
+            if (existing) {
+                const { error } = await dbClient.from('lowongan_tutor').update(row).eq('id_lowongan', payload.id_lowongan);
+                if (error) throw error;
+            } else {
+                const { error } = await dbClient.from('lowongan_tutor').insert([row]);
+                if (error) throw error;
+            }
+            return true;
+        }
+        else if (action === 'deleteLowongan') {
+            const { error } = await dbClient.from('lowongan_tutor').delete().eq('id_lowongan', payload.id_lowongan);
+            if (error) throw error;
+            return true;
+        }
     } catch (error) {
         console.error("DB Error:", error);
         throw error;
@@ -1372,23 +1404,26 @@ function quickInputSesi(idSiswa) {
 }
 
 // ============================================================
-// LOWONGAN TUTOR
+// LOWONGAN TUTOR  (data disimpan di Supabase, tabel: lowongan_tutor)
 // ============================================================
-const LOWONGAN_KEY = 'sainspiq_lowongan_v1';
+let dataLowongan = [];
 
-function getLowonganData() {
-    try { return JSON.parse(localStorage.getItem(LOWONGAN_KEY)) || []; }
-    catch(e) { return []; }
-}
-function saveLowonganData(data) {
-    localStorage.setItem(LOWONGAN_KEY, JSON.stringify(data));
-}
-
-function loadLowongan() {
-    const data = getLowonganData();
+async function loadLowongan() {
     const container = document.getElementById('lowonganList');
     if (!container) return;
-    if (data.length === 0) {
+    try {
+        dataLowongan = (await apiCall('getLowongan')) || [];
+    } catch(e) {
+        dataLowongan = [];
+        console.error("Gagal load lowongan:", e);
+    }
+    renderLowongan();
+}
+
+function renderLowongan() {
+    const container = document.getElementById('lowonganList');
+    if (!container) return;
+    if (dataLowongan.length === 0) {
         container.innerHTML = `
             <div class="p-5 text-center text-gray-400 text-sm italic">
                 <div class="w-10 h-10 bg-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-2">
@@ -1402,7 +1437,7 @@ function loadLowongan() {
     const statusClass = { open: 'badge-open', soon: 'badge-soon', closed: 'badge-closed' };
     const statusIcon = { open: 'fa-circle-check', soon: 'fa-clock', closed: 'fa-circle-xmark' };
     let html = '';
-    data.forEach((item, idx) => {
+    dataLowongan.forEach((item) => {
         const isAdmin = currentUser.role === 'admin';
         const deadlineText = item.deadline ? `<span class="text-xs text-gray-400 flex items-center gap-1"><i class="fa-regular fa-calendar"></i> Deadline: ${item.deadline}</span>` : '';
         html += `
@@ -1428,10 +1463,10 @@ function loadLowongan() {
                 </div>
                 ${isAdmin ? `
                 <div class="flex gap-1.5 flex-shrink-0">
-                    <button onclick="editLowongan(${idx})" class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 flex items-center justify-center transition">
+                    <button onclick="editLowongan('${item.id_lowongan}')" class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 flex items-center justify-center transition">
                         <i class="fa-solid fa-edit text-xs"></i>
                     </button>
-                    <button onclick="deleteLowongan(${idx})" class="w-8 h-8 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center transition">
+                    <button onclick="deleteLowongan('${item.id_lowongan}')" class="w-8 h-8 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center transition">
                         <i class="fa-solid fa-trash text-xs"></i>
                     </button>
                 </div>` : ''}
@@ -1459,12 +1494,11 @@ function closeLowonganModal() {
     document.getElementById('lowonganModal').classList.add('hide');
 }
 
-function editLowongan(idx) {
-    const data = getLowonganData();
-    const item = data[idx];
+function editLowongan(idLowongan) {
+    const item = dataLowongan.find(d => d.id_lowongan === idLowongan);
     if (!item) return;
     document.getElementById('lowonganModalMode').innerText = 'Edit Lowongan';
-    document.getElementById('lowonganIdEdit').value = idx;
+    document.getElementById('lowonganIdEdit').value = item.id_lowongan;
     document.getElementById('lowonganPosisi').value = item.posisi || '';
     document.getElementById('lowonganLokasi').value = item.lokasi || '';
     document.getElementById('lowonganStatus').value = item.status || 'open';
@@ -1474,39 +1508,38 @@ function editLowongan(idx) {
     openLowonganModal(true);
 }
 
-function saveLowongan() {
+async function saveLowongan() {
     const posisi = document.getElementById('lowonganPosisi').value.trim();
     if (!posisi) { showToast("Posisi wajib diisi!", "error"); return; }
-    const item = {
+    const editId = document.getElementById('lowonganIdEdit').value;
+    const payload = {
+        id_lowongan: editId || ("LWN-" + Date.now()),
         posisi,
         lokasi: document.getElementById('lowonganLokasi').value.trim(),
         status: document.getElementById('lowonganStatus').value,
         keterangan: document.getElementById('lowonganKeterangan').value.trim(),
         kontak: document.getElementById('lowonganKontak').value.trim(),
-        deadline: document.getElementById('lowonganDeadline').value,
-        createdAt: Date.now()
+        deadline: document.getElementById('lowonganDeadline').value || null,
     };
-    const data = getLowonganData();
-    const editIdx = document.getElementById('lowonganIdEdit').value;
-    if (editIdx !== '') {
-        data[parseInt(editIdx)] = { ...data[parseInt(editIdx)], ...item };
-        showToast("Lowongan berhasil diperbarui!");
-    } else {
-        data.push(item);
-        showToast("Lowongan berhasil ditambahkan!");
-    }
-    saveLowonganData(data);
-    closeLowonganModal();
-    loadLowongan();
+    showLoading(true, "Menyimpan lowongan...");
+    try {
+        await apiCall('saveLowongan', payload);
+        showToast(editId ? "Lowongan berhasil diperbarui!" : "Lowongan berhasil ditambahkan!");
+        closeLowonganModal();
+        await loadLowongan();
+    } catch(e) { showToast("Gagal menyimpan: " + e.message, "error"); }
+    showLoading(false);
 }
 
-function deleteLowongan(idx) {
-    showConfirm('Hapus Lowongan', 'Lowongan ini akan dihapus permanen.', () => {
-        const data = getLowonganData();
-        data.splice(idx, 1);
-        saveLowonganData(data);
-        loadLowongan();
-        showToast("Lowongan dihapus.");
+function deleteLowongan(idLowongan) {
+    showConfirm('Hapus Lowongan', 'Lowongan ini akan dihapus permanen.', async () => {
+        showLoading(true);
+        try {
+            await apiCall('deleteLowongan', { id_lowongan: idLowongan });
+            showToast("Lowongan dihapus.");
+            await loadLowongan();
+        } catch(e) { showToast("Gagal menghapus: " + e.message, "error"); }
+        showLoading(false);
     });
 }
 
@@ -1660,7 +1693,7 @@ async function loadDashboard() {
     } catch (e) {
         document.getElementById('dashboardStats').innerHTML = '<p class="text-red-500 text-sm col-span-4">Gagal memuat data.</p>';
     }
-    loadLowongan();
+    await loadLowongan();
     showLoading(false);
 }
 
