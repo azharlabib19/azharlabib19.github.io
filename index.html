@@ -796,6 +796,20 @@
                 <div id="pageRekap" class="page-content hide">
                     <h2 class="text-xl font-extrabold text-gray-900 mb-5 tracking-tight">Rekap, Laporan & Riwayat</h2>
 
+                    <!-- Banner Aturan / Peringatan Admin -->
+                    <div id="rekapAdminBanner" class="mb-5 relative rounded-2xl border-2 border-red-500 bg-red-50 px-5 py-4 flex items-start gap-4 shadow-sm">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500 flex items-center justify-center">
+                            <i class="fa-solid fa-triangle-exclamation text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-red-600 uppercase tracking-wide mb-1">Pengumuman / Aturan</p>
+                            <p id="rekapBannerText" class="text-sm text-red-800 font-medium leading-relaxed">Harap isi rekap sesi dengan lengkap dan jujur. Data yang tidak akurat dapat mempengaruhi laporan ke orang tua siswa.</p>
+                        </div>
+                        <button id="btnEditRekapBanner" onclick="editRekapBanner()" class="hide flex-shrink-0 text-red-400 hover:text-red-600 bg-red-100 hover:bg-red-200 rounded-full p-1.5 transition" title="Edit Banner">
+                            <i class="fa-solid fa-pencil text-xs"></i>
+                        </button>
+                    </div>
+
                     <div id="rekapMotivasiCard" class="hide mb-5"
                         style="background:linear-gradient(135deg,#f97316,#ec4899);border-radius:20px"
                         class="p-6 text-white flex items-center justify-between shadow-lg">
@@ -1130,6 +1144,10 @@ document.getElementById('promptBtnSubmit').addEventListener('click', () => {
 });
 
 function editCustomBanner() {
+    if (currentUser.role !== 'admin') {
+        showToast("Akses ditolak! Hanya admin yang dapat mengubah banner.", "error");
+        return;
+    }
     showPrompt("Edit Banner Motivasi", "Ketikkan kata-kata penyemangat baru:", document.getElementById('bannerText').innerText, (newText) => {
         if (newText?.trim()) {
             document.getElementById('bannerText').innerText = newText;
@@ -1138,11 +1156,29 @@ function editCustomBanner() {
         }
     });
 }
+function editRekapBanner() {
+    if (currentUser.role !== 'admin') {
+        showToast("Akses ditolak! Hanya admin yang dapat mengubah banner.", "error");
+        return;
+    }
+    showPrompt("Edit Banner Aturan / Peringatan", "Ketikkan teks aturan atau peringatan:", document.getElementById('rekapBannerText').innerText, (newText) => {
+        if (newText?.trim()) {
+            document.getElementById('rekapBannerText').innerText = newText;
+            localStorage.setItem('rekapBannerText', newText);
+            showToast("Banner berhasil diubah!");
+        }
+    });
+}
+function applyRekapBanner() {
+    const saved = localStorage.getItem('rekapBannerText');
+    if (saved) document.getElementById('rekapBannerText').innerText = saved;
+}
+
+
 function applyCustomBanner() {
     const saved = localStorage.getItem('customBannerText');
     if (saved) document.getElementById('bannerText').innerText = saved;
 }
-
 // ============================================================
 // UI HELPERS
 // ============================================================
@@ -1344,12 +1380,17 @@ async function apiCall(action, payload = {}) {
 // MISSING SESI NOTIF
 // ============================================================
 async function checkMissingSesi() {
-    if (currentUser.role !== 'admin') return;
     const today = getTodayDate();
     const { data: sesiHariIni } = await dbClient.from('sesi_les').select('id_siswa,status_sesi').eq('tanggal', today);
     // Sesi dianggap "sudah diinput" hanya jika ada entri dengan status apapun (Selesai/Batal/Reschedule/Libur)
     const sudahInputIds = new Set((sesiHariIni || []).map(s => s.id_siswa));
-    const missingSiswa = dataSiswa.filter(s => siswaJadwalHariIni(s) && !sudahInputIds.has(s.id_siswa));
+    // Filter siswa berdasarkan role: guru hanya melihat siswa yang ditugaskan kepadanya
+    let siswaCandidates = dataSiswa;
+    if (currentUser.role === 'guru') {
+        const assigned = (currentUser.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean);
+        siswaCandidates = dataSiswa.filter(s => assigned.includes(s.id_siswa));
+    }
+    const missingSiswa = siswaCandidates.filter(s => siswaJadwalHariIni(s) && !sudahInputIds.has(s.id_siswa));
     const bell = document.getElementById('btnNotifBell');
     const badge = document.getElementById('notifBadge');
     // Hanya tampilkan jika jam >= 20 ATAU sudah ada sesi yang diinput sebagian (untuk konsistensi)
@@ -1551,6 +1592,7 @@ function deleteLowongan(idLowongan) {
 // ============================================================
 window.onload = () => {
     applyCustomBanner();
+    applyRekapBanner();
     let savedUser = localStorage.getItem('les_user');
     if (savedUser) {
         try {
@@ -1594,6 +1636,7 @@ async function initApp() {
     if (currentUser.role === 'admin') {
         document.getElementById('btnEditBanner').classList.remove('hide');
         document.getElementById('btnTambahLowongan').classList.remove('hide');
+        document.getElementById('btnEditRekapBanner').classList.remove('hide');
     }
     buildNavigation();
     dataSiswa = (await apiCall('getSiswa')) || [];
