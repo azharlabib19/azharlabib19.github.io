@@ -1477,6 +1477,7 @@ function renderLowongan() {
 }
 
 function openLowonganModal(editMode = false) {
+    if (currentUser.role !== 'admin') { showToast("Akses ditolak!", "error"); return; }
     if (!editMode) {
         document.getElementById('lowonganModalMode').innerText = 'Tambah Lowongan Baru';
         document.getElementById('lowonganIdEdit').value = '';
@@ -1509,6 +1510,7 @@ function editLowongan(idLowongan) {
 }
 
 async function saveLowongan() {
+    if (currentUser.role !== 'admin') { showToast("Akses ditolak!", "error"); return; }
     const posisi = document.getElementById('lowonganPosisi').value.trim();
     if (!posisi) { showToast("Posisi wajib diisi!", "error"); return; }
     const editId = document.getElementById('lowonganIdEdit').value;
@@ -1532,6 +1534,7 @@ async function saveLowongan() {
 }
 
 function deleteLowongan(idLowongan) {
+    if (currentUser.role !== 'admin') { showToast("Akses ditolak!", "error"); return; }
     showConfirm('Hapus Lowongan', 'Lowongan ini akan dihapus permanen.', async () => {
         showLoading(true);
         try {
