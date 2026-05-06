@@ -2140,11 +2140,21 @@ function resetFormGuru() {
 // ============================================================
 // CRUD SESI
 // ============================================================
+function resetFormSesi() {
+    document.getElementById('sesiId').value = "";
+    document.getElementById('sesiSiswa').value = "";
+    document.getElementById('sesiTanggal').valueAsDate = new Date();
+    document.getElementById('sesiStatus').value = "Selesai";
+    document.getElementById('sesiJurnal').value = "";
+    document.getElementById('warningSisaSesi').classList.add('hide');
+}
+
 async function handleSaveSesi(e) {
     e.preventDefault();
     const idSiswa = document.getElementById('sesiSiswa').value;
     const siswaObj = dataSiswa.find(s => s.id_siswa === idSiswa);
     if (!siswaObj) { showToast("Siswa tidak ditemukan!", "error"); return; }
+    const isEdit = !!document.getElementById('sesiId').value;
     const payload = {
         id_sesi: document.getElementById('sesiId').value || "",
         tanggal: document.getElementById('sesiTanggal').value,
@@ -2156,8 +2166,10 @@ async function handleSaveSesi(e) {
     showLoading(true, "Menyimpan Sesi...");
     try {
         await apiCall('saveSesi', payload);
-        showToast("Sesi berhasil disimpan!");
-        resetFormSesi(); navigate('rekap');
+        showToast(isEdit ? "✅ Sesi berhasil diperbarui!" : "✅ Sesi berhasil disimpan!");
+        resetFormSesi();
+        await loadSiswaOptions();
+        navigate('rekap');
     } catch (e) { showToast("Gagal: " + e.message, "error"); }
     showLoading(false);
 }
