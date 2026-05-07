@@ -294,12 +294,20 @@
                 <p class="text-slate-600 text-sm mb-4 font-bold">Pilih cara download:</p>
 
                 <div class="flex flex-col gap-3">
+                    <!-- Opsi 0: Download langsung ke Unduhan (paling andal) -->
+                    <button onclick="downloadPDFDirect()" class="w-full bg-gradient-to-r from-rose-600 to-red-500 border-2 border-rose-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
+                        <i class="fa-solid fa-download text-lg"></i>
+                        <div class="text-left">
+                            <div>Simpan ke Unduhan</div>
+                            <div class="text-xs font-semibold opacity-80">Langsung tersimpan di HP</div>
+                        </div>
+                    </button>
                     <!-- Opsi 1: Share API (simpan ke Files/Drive/WA) -->
                     <button onclick="sharePDF()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 border-2 border-emerald-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
                         <i class="fa-solid fa-share-nodes text-lg"></i>
                         <div class="text-left">
-                            <div>Bagikan / Simpan ke Files</div>
-                            <div class="text-xs font-semibold opacity-80">WhatsApp, Drive, Unduhan, dll</div>
+                            <div>Bagikan / Kirim</div>
+                            <div class="text-xs font-semibold opacity-80">WhatsApp, Drive, dll</div>
                         </div>
                     </button>
                     <!-- Opsi 2: Buka di Chrome → download dari sana -->
@@ -970,39 +978,53 @@
                     </div>
 
                     <!-- PDF hidden -->
-                    <div style="position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;" aria-hidden="true">
-                        <div id="pdfContent" class="bg-white p-8" style="font-family:Arial,sans-serif;">
-                            <div class="text-center border-b-2 border-gray-800 pb-5 mb-6">
-                                <h1 class="text-2xl font-black uppercase tracking-wide" style="color:#1e3a8a;">Laporan Hasil Belajar Les Privat</h1>
-                                <p class="text-gray-500 font-medium mt-1" id="reportDateRange">Periode: -</p>
+                    <div style="position:absolute;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;" aria-hidden="true">
+                        <div id="pdfContent" style="font-family:Arial,Helvetica,sans-serif;background:#fff;padding:32px 40px;width:794px;box-sizing:border-box;color:#111;">
+                            <!-- Header -->
+                            <div style="text-align:center;border-bottom:3px solid #1e3a8a;padding-bottom:14px;margin-bottom:20px;">
+                                <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#64748b;text-transform:uppercase;margin-bottom:6px;">LBB SAINSPIQ · Jurnal Les Privat</div>
+                                <div style="font-size:20px;font-weight:900;color:#1e3a8a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Laporan Hasil Belajar</div>
+                                <div id="reportDateRange" style="font-size:12px;color:#64748b;font-weight:600;">Periode: -</div>
                             </div>
-                            <div class="mb-8 flex justify-between text-sm">
-                                <div class="bg-gray-50 p-3 rounded border border-gray-100 w-1/2">
-                                    <p class="mb-1"><span class="text-gray-600">Nama Siswa:</span> <strong id="reportSiswaName">-</strong></p>
-                                    <p><span class="text-gray-600">Total Sesi Hadir:</span> <strong class="text-blue-600" id="reportTotalHadir">0</strong></p>
+                            <!-- Info Siswa -->
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;">
+                                <div style="background:#f0f4ff;border:1px solid #c7d7fd;border-radius:8px;padding:12px 16px;flex:1;">
+                                    <div style="font-size:11px;color:#4b5563;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Nama Siswa</div>
+                                    <div id="reportSiswaName" style="font-size:15px;font-weight:900;color:#1e3a8a;">-</div>
                                 </div>
-                                <div class="text-right text-gray-600 self-end">
-                                    <p>Dicetak: <span id="reportPrintDate" class="font-bold text-gray-800"></span></p>
+                                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;min-width:140px;text-align:center;">
+                                    <div style="font-size:11px;color:#4b5563;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Total Hadir</div>
+                                    <div id="reportTotalHadir" style="font-size:24px;font-weight:900;color:#16a34a;">0</div>
+                                    <div style="font-size:10px;color:#16a34a;font-weight:700;">sesi</div>
+                                </div>
+                                <div style="background:#fafafa;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;min-width:130px;text-align:right;">
+                                    <div style="font-size:11px;color:#4b5563;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Dicetak</div>
+                                    <div id="reportPrintDate" style="font-size:12px;font-weight:700;color:#374151;">-</div>
                                 </div>
                             </div>
-                            <table class="w-full text-sm border-collapse border border-gray-300">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="border border-gray-300 p-3 text-left w-1/6 font-bold">Tanggal</th>
-                                        <th class="border border-gray-300 p-3 text-left w-1/6 font-bold">Tutor</th>
-                                        <th class="border border-gray-300 p-3 text-center w-1/12 font-bold">Status</th>
-                                        <th class="border border-gray-300 p-3 text-left font-bold">Jurnal & Evaluasi Materi</th>
+                            <!-- Tabel -->
+                            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                                <thead>
+                                    <tr style="background:#1e3a8a;color:#fff;">
+                                        <th style="border:1px solid #1e40af;padding:9px 10px;text-align:left;width:90px;font-weight:700;white-space:nowrap;">Tanggal</th>
+                                        <th style="border:1px solid #1e40af;padding:9px 10px;text-align:left;width:110px;font-weight:700;">Tutor</th>
+                                        <th style="border:1px solid #1e40af;padding:9px 10px;text-align:center;width:70px;font-weight:700;">Status</th>
+                                        <th style="border:1px solid #1e40af;padding:9px 10px;text-align:left;font-weight:700;">Jurnal &amp; Evaluasi Materi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="reportTableBody" class="text-gray-800"></tbody>
+                                <tbody id="reportTableBody" style="color:#1f2937;"></tbody>
                             </table>
-                            <div id="aiNarrativeContainer" class="mt-6 bg-purple-50 p-4 rounded border border-purple-200 hide text-sm text-gray-800">
-                                <strong>💡 Ringkasan Evaluasi (Generated by AI):</strong>
-                                <p id="aiNarrativeText" class="mt-2 italic leading-relaxed font-medium"></p>
+                            <!-- AI Narrative -->
+                            <div id="aiNarrativeContainer" class="hide" style="margin-top:20px;background:#faf5ff;padding:14px 16px;border-radius:8px;border:1px solid #d8b4fe;font-size:12px;color:#374151;">
+                                <div style="font-weight:800;color:#7c3aed;margin-bottom:6px;">💡 Ringkasan Evaluasi (Generated by AI):</div>
+                                <p id="aiNarrativeText" style="margin:0;line-height:1.7;font-style:italic;"></p>
                             </div>
-                            <div class="mt-12 pt-6 text-right text-sm">
-                                <p class="mb-16 text-gray-600">Mengetahui, Pimpinan Les</p>
-                                <p class="font-bold border-b border-gray-400 inline-block px-8 pb-1">Admin Akademik</p>
+                            <!-- Tanda Tangan -->
+                            <div style="margin-top:40px;display:flex;justify-content:flex-end;">
+                                <div style="text-align:center;min-width:180px;">
+                                    <div style="font-size:12px;color:#4b5563;margin-bottom:56px;">Mengetahui, Pimpinan Les</div>
+                                    <div style="border-top:2px solid #374151;padding-top:6px;font-size:12px;font-weight:800;color:#111;">Admin Akademik</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2491,13 +2513,13 @@ async function generateReport() {
         document.getElementById('reportDateRange').innerText = `Periode: ${tglMulai || 'Awal'} s/d ${tglAkhir || 'Sekarang'}`;
         filtered.sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
         let hadir = 0, html = '';
-        filtered.forEach(s => {
+        filtered.forEach((s, idx) => {
             if (s.status_sesi === 'Selesai') hadir++;
-            html += `<tr class="border-b border-gray-200">
-                <td class="p-3 align-top whitespace-nowrap">${s.tanggal}</td>
-                <td class="p-3 align-top whitespace-nowrap">${s.nama_guru}</td>
-                <td class="p-3 align-top text-center font-semibold ${s.status_sesi==='Selesai'?'text-green-600':'text-red-500'}">${s.status_sesi}</td>
-                <td class="p-3 align-top text-gray-700 leading-relaxed">${s.jurnal_materi}</td>
+            html += `<tr style="border-bottom:1px solid #e5e7eb;${idx%2===1?'background:#f9fafb;':''}">
+                <td style="padding:8px 10px;vertical-align:top;white-space:nowrap;font-size:12px;">${s.tanggal}</td>
+                <td style="padding:8px 10px;vertical-align:top;white-space:nowrap;font-size:12px;">${s.nama_guru}</td>
+                <td style="padding:8px 10px;vertical-align:top;text-align:center;font-weight:700;font-size:12px;color:${s.status_sesi==='Selesai'?'#16a34a':'#dc2626'};">${s.status_sesi}</td>
+                <td style="padding:8px 10px;vertical-align:top;font-size:12px;line-height:1.6;color:#374151;">${s.jurnal_materi}</td>
             </tr>`;
         });
         document.getElementById('reportTableBody').innerHTML = html || '<tr><td colspan="4" class="text-center p-6 italic text-gray-500">Tidak ada data.</td></tr>';
@@ -2519,23 +2541,37 @@ async function generateReport() {
 }
 
 let _pdfDataUri = null;
+let _pdfFileName = 'Laporan_Belajar.pdf';
+
+function getPdfFileName() {
+    const namaSiswa = document.getElementById('reportSiswaName')?.innerText?.trim() || '';
+    const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    if (namaSiswa && namaSiswa !== 'Semua Siswa' && namaSiswa !== '-') {
+        // Bersihkan nama: hapus karakter non-alfanumerik selain spasi, ganti spasi dgn _
+        const bersih = namaSiswa.replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_');
+        return `Rekap_${bersih}_${today}.pdf`;
+    }
+    return `Rekap_Semua_Siswa_${today}.pdf`;
+}
 
 function exportToPDF() {
     showLoading(true, "Menyiapkan PDF...");
+    _pdfFileName = getPdfFileName();
     // Beri waktu UI render loading dulu sebelum proses berat dimulai
     setTimeout(() => {
         const el = document.getElementById('pdfContent');
         html2pdf().set({
-            margin: [15,10,15,10],
-            filename: 'Laporan_Belajar.pdf',
-            image: { type: 'jpeg', quality: 0.80 },
+            margin: [10, 10, 10, 10],
+            filename: _pdfFileName,
+            image: { type: 'jpeg', quality: 0.92 },
             html2canvas: {
-                scale: 1,           // Turunkan dari 2 → 1 agar tidak freeze di WebView
-                windowWidth: 800,
+                scale: 2,
+                windowWidth: 794,
                 scrollY: 0,
                 useCORS: true,
                 logging: false,
-                removeContainer: true
+                removeContainer: true,
+                backgroundColor: '#ffffff'
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).from(el).outputPdf('datauristring')
@@ -2571,7 +2607,7 @@ function dataUriToFile(dataUri, filename) {
 // Opsi 1: Share via Web Share API → dialog native Android muncul (WA, Drive, Files, dll)
 async function sharePDF() {
     if (!_pdfDataUri) return;
-    const file = dataUriToFile(_pdfDataUri, 'Laporan_Belajar.pdf');
+    const file = dataUriToFile(_pdfDataUri, _pdfFileName);
     try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
@@ -2585,10 +2621,36 @@ async function sharePDF() {
         }
     } catch(e) {
         if (e.name === 'AbortError') return; // user cancel, tidak perlu fallback
-        // error lain → coba buka di Chrome
+        // error lain → coba download langsung
     }
-    // Fallback: buka di Chrome
-    bukadiChrome();
+    // Fallback: download langsung via <a> tag
+    downloadPDFDirect();
+}
+
+// Download langsung — simpan file ke folder Unduhan HP
+function downloadPDFDirect() {
+    if (!_pdfDataUri) return;
+    try {
+        const arr = _pdfDataUri.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--) u8arr[n] = bstr.charCodeAt(n);
+        const blob = new Blob([u8arr], {type: mime});
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = _pdfFileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(blobUrl); a.remove(); }, 3000);
+        closePdfModal();
+        showToast("✅ PDF disimpan ke folder Unduhan!");
+    } catch(e) {
+        // Jika gagal, buka di Chrome sebagai last resort
+        bukadiChrome();
+    }
 }
 
 // Opsi 2: Buka PDF di browser Chrome bawaan Android
@@ -2604,7 +2666,7 @@ function bukadiChrome() {
         + '.hint{background:#1d4ed8;color:#bfdbfe;font-size:11px;padding:8px 16px;font-family:sans-serif;flex-shrink:0}'
         + 'iframe{flex:1;width:100%;border:none}'
         + '</style></head><body>'
-        + '<div class="bar"><span>📄</span> Laporan Belajar SAINSPIQ</div>'
+        + '<div class="bar"><span>📄</span> ' + _pdfFileName + '</div>'
         + '<div class="hint">💡 Tekan menu ⋮ pojok kanan atas Chrome → "Download" untuk menyimpan ke Unduhan</div>'
         + '<iframe src="' + _pdfDataUri + '"></iframe>'
         + '</body></html>';
