@@ -282,6 +282,27 @@
         </div>
     </div>
 
+    <!-- PDF Download Modal -->
+    <div id="pdfModal" class="modal-backdrop hide">
+        <div class="modal-card max-w-sm border-2 border-rose-200">
+            <div class="p-8 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-rose-50 rounded-b-[50%] -z-10"></div>
+                <div class="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border-2 border-rose-200 relative z-10 text-rose-600">
+                    <i class="fa-solid fa-file-pdf text-4xl"></i>
+                </div>
+                <h3 class="text-slate-900 font-black text-2xl mb-2">Download PDF</h3>
+                <p class="text-slate-600 text-sm mb-2 font-bold">PDF laporan sudah siap.</p>
+                <p class="text-slate-500 text-xs mb-8 font-semibold">Tekan <strong>"Buka PDF"</strong> lalu tekan tahan pada PDF → pilih <strong>Download / Simpan</strong> untuk menyimpan ke perangkat.</p>
+                <div class="flex gap-4">
+                    <button onclick="closePdfModal()" class="flex-1 bg-slate-100 text-slate-800 border-2 border-slate-200 font-black px-4 py-3.5 rounded-2xl hover:bg-slate-200 transition">Batal</button>
+                    <button id="btnBukaPDF" onclick="bukaPDF()" class="flex-1 bg-gradient-to-r from-rose-600 to-red-600 border-2 border-rose-400 text-white font-black px-4 py-3.5 rounded-2xl hover:opacity-90 shadow-lg shadow-rose-500/30 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-arrow-down"></i> Buka PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Prompt Modal -->
     <div id="promptModal" class="modal-backdrop hide">
         <div class="modal-card max-w-sm">
@@ -2482,8 +2503,10 @@ async function generateReport() {
     showLoading(false);
 }
 
+let _pdfDataUri = null;
+
 function exportToPDF() {
-    showLoading(true, "Mengekspor PDF...");
+    showLoading(true, "Menyiapkan PDF...");
     html2pdf().set({
         margin: [15,10,15,10], filename: 'Laporan_Belajar.pdf',
         image: { type: 'jpeg', quality: 0.98 },
@@ -2492,27 +2515,41 @@ function exportToPDF() {
     }).from(document.getElementById('pdfContent')).outputPdf('datauristring')
         .then((dataUri) => {
             showLoading(false);
-            // Coba metode download biasa (browser desktop/mobile)
-            try {
-                const link = document.createElement('a');
-                link.href = dataUri;
-                link.download = 'Laporan_Belajar.pdf';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showToast("PDF berhasil diunduh!");
-            } catch(e) {
-                // Fallback: buka di tab/window baru (untuk WebView Android)
-                try {
-                    const win = window.open();
-                    win.document.write('<iframe src="' + dataUri + '" width="100%" height="100%" style="border:none;position:fixed;top:0;left:0;"></iframe>');
-                    showToast("PDF dibuka di tab baru!");
-                } catch(e2) {
-                    showToast("Gagal ekspor PDF.", "error");
-                }
-            }
+            _pdfDataUri = dataUri;
+            document.getElementById('pdfModal').classList.remove('hide');
         })
-        .catch(() => { showLoading(false); showToast("Gagal ekspor PDF.", "error"); });
+        .catch(() => { showLoading(false); showToast("Gagal membuat PDF.", "error"); });
+}
+
+function closePdfModal() {
+    document.getElementById('pdfModal').classList.add('hide');
+    _pdfDataUri = null;
+}
+
+function bukaPDF() {
+    if (!_pdfDataUri) return;
+    try {
+        const link = document.createElement('a');
+        link.href = _pdfDataUri;
+        link.download = 'Laporan_Belajar.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch(e) {}
+    try {
+        const win = window.open('', '_blank');
+        if (win) {
+            win.document.write(
+                '<!DOCTYPE html><html><head><title>Laporan PDF</title>' +
+                '<style>*{margin:0;padding:0}body{background:#222}' +
+                'iframe{position:fixed;top:0;left:0;width:100%;height:100%;border:none}</style></head>' +
+                '<body><iframe src="' + _pdfDataUri + '"></iframe></body></html>'
+            );
+            win.document.close();
+        }
+    } catch(e2) {}
+    closePdfModal();
+    showToast("PDF siap — simpan dari tab yang terbuka!");
 }
 </script>
 </body>
