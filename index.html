@@ -1071,7 +1071,7 @@
 // ============================================================
 // ⚡ KONFIGURASI
 // ============================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwq763_Zuc8aNYuUmVjidGqP6eyy131USCwzbdTGzyHBxQPUuNulz1QT5zx4bMrslSK/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzPlLPsGRyHduSdJzqQuCbJFn5wbJ6op1NWGuA8Y7afD-4QXPeNOtViq4DxQ4FH758j/exec";
 
 const SUPABASE_URL = "https://napymkogkzwtvdjictip.supabase.co".trim();
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcHlta29na3p3dHZkamljdGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2OTM5NDIsImV4cCI6MjA5MzI2OTk0Mn0.t3r51kXGSBoZuzZh35htYzRviWZTnhukpsJbd_hjIrc".trim();
@@ -1090,11 +1090,10 @@ async function callAIBackend(action, payload) {
     if (!GAS_URL || GAS_URL === "PASTE_URL_GOOGLE_APPS_SCRIPT_DI_SINI") {
         throw new Error("URL Google Apps Script belum dikonfigurasi. Hubungi admin.");
     }
-    const response = await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action, payload })
-    });
+    // Menggunakan GET + query param untuk menghindari CORS redirect issue
+    const params = encodeURIComponent(JSON.stringify({ action, payload }));
+    const url = GAS_URL + "?data=" + params;
+    const response = await fetch(url, { method: "GET" });
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     const data = await response.json();
     if (data.error) throw new Error(data.error);
