@@ -291,13 +291,10 @@
                     <i class="fa-solid fa-file-pdf text-4xl"></i>
                 </div>
                 <h3 class="text-slate-900 font-black text-2xl mb-2">PDF Siap!</h3>
-                <p id="pdfModalDesc" class="text-slate-600 text-sm mb-8 font-bold">Pilih cara simpan PDF ke perangkat kamu.</p>
+                <p id="pdfModalDesc" class="text-slate-600 text-sm mb-8 font-bold">PDF laporan sudah siap. Tekan tombol di bawah untuk menyimpan ke perangkat.</p>
                 <div class="flex flex-col gap-3">
-                    <button id="btnSharePDF" onclick="sharePDF()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 border-2 border-emerald-400 text-white font-black px-4 py-3.5 rounded-2xl hover:opacity-90 shadow-lg shadow-emerald-500/30 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-share-nodes text-lg"></i> Simpan / Bagikan PDF
-                    </button>
-                    <button id="btnDownloadPDF" onclick="downloadPDF()" class="w-full bg-gradient-to-r from-rose-600 to-red-600 border-2 border-rose-400 text-white font-black px-4 py-3.5 rounded-2xl hover:opacity-90 shadow-lg shadow-rose-500/30 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-download text-lg"></i> Download Langsung
+                    <button id="btnSharePDF" onclick="sharePDF()" class="w-full bg-gradient-to-r from-rose-600 to-red-600 border-2 border-rose-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg shadow-rose-500/30 transition flex items-center justify-center gap-3 text-base">
+                        <i class="fa-solid fa-file-arrow-down text-xl"></i> Download PDF
                     </button>
                     <button onclick="closePdfModal()" class="w-full bg-slate-100 text-slate-800 border-2 border-slate-200 font-black px-4 py-3.5 rounded-2xl hover:bg-slate-200 transition">Batal</button>
                 </div>
@@ -2539,23 +2536,26 @@ function dataUriToFile(dataUri, filename) {
     return new File([u8arr], filename, { type: mime });
 }
 
-// Tombol 1: Share/Simpan via Web Share API (paling native di Android)
+// Share via Web Share API (paling native di Android / Website2APK)
 async function sharePDF() {
     if (!_pdfDataUri) return;
     const file = dataUriToFile(_pdfDataUri, 'Laporan_Belajar.pdf');
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
+    try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: 'Laporan Belajar', text: 'Laporan Les Privat SAINSPIQ' });
             closePdfModal();
-            showToast("PDF berhasil dibagikan/disimpan!");
+            showToast("PDF berhasil disimpan/dibagikan!");
             return;
-        } catch(e) { /* user cancel atau error, lanjut ke fallback */ }
+        }
+    } catch(e) {
+        if (e.name !== 'AbortError') downloadPDF();
+        return;
     }
-    // Fallback jika share tidak support
+    // Fallback jika Web Share API tidak support file
     downloadPDF();
 }
 
-// Tombol 2: Download langsung (works di Chrome, fallback WebView)
+// Download via data URI (fallback)
 function downloadPDF() {
     if (!_pdfDataUri) return;
     const link = document.createElement('a');
