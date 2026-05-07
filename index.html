@@ -2489,8 +2489,29 @@ function exportToPDF() {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, windowWidth: 800, scrollY: 0 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(document.getElementById('pdfContent')).save()
-        .then(() => { showLoading(false); showToast("PDF berhasil diunduh!"); })
+    }).from(document.getElementById('pdfContent')).outputPdf('datauristring')
+        .then((dataUri) => {
+            showLoading(false);
+            // Coba metode download biasa (browser desktop/mobile)
+            try {
+                const link = document.createElement('a');
+                link.href = dataUri;
+                link.download = 'Laporan_Belajar.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("PDF berhasil diunduh!");
+            } catch(e) {
+                // Fallback: buka di tab/window baru (untuk WebView Android)
+                try {
+                    const win = window.open();
+                    win.document.write('<iframe src="' + dataUri + '" width="100%" height="100%" style="border:none;position:fixed;top:0;left:0;"></iframe>');
+                    showToast("PDF dibuka di tab baru!");
+                } catch(e2) {
+                    showToast("Gagal ekspor PDF.", "error");
+                }
+            }
+        })
         .catch(() => { showLoading(false); showToast("Gagal ekspor PDF.", "error"); });
 }
 </script>
