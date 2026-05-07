@@ -291,13 +291,29 @@
                     <i class="fa-solid fa-file-pdf text-4xl"></i>
                 </div>
                 <h3 class="text-slate-900 font-black text-2xl mb-2">PDF Siap!</h3>
-                <p id="pdfModalDesc" class="text-slate-600 text-sm mb-8 font-bold">PDF laporan sudah siap. Tekan tombol di bawah untuk menyimpan ke perangkat.</p>
+                <p class="text-slate-600 text-sm mb-4 font-bold">Pilih cara download:</p>
+
                 <div class="flex flex-col gap-3">
-                    <button id="btnSharePDF" onclick="sharePDF()" class="w-full bg-gradient-to-r from-rose-600 to-red-600 border-2 border-rose-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg shadow-rose-500/30 transition flex items-center justify-center gap-3 text-base">
-                        <i class="fa-solid fa-file-arrow-down text-xl"></i> Download PDF
+                    <!-- Opsi 1: Share API (simpan ke Files/Drive/WA) -->
+                    <button onclick="sharePDF()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 border-2 border-emerald-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
+                        <i class="fa-solid fa-share-nodes text-lg"></i>
+                        <div class="text-left">
+                            <div>Bagikan / Simpan ke Files</div>
+                            <div class="text-xs font-semibold opacity-80">WhatsApp, Drive, Unduhan, dll</div>
+                        </div>
+                    </button>
+                    <!-- Opsi 2: Buka di Chrome → download dari sana -->
+                    <button onclick="bukadiChrome()" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 border-2 border-blue-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
+                        <i class="fa-solid fa-globe text-lg"></i>
+                        <div class="text-left">
+                            <div>Buka di Chrome</div>
+                            <div class="text-xs font-semibold opacity-80">Lalu tekan ⋮ → Download</div>
+                        </div>
                     </button>
                     <button onclick="closePdfModal()" class="w-full bg-slate-100 text-slate-800 border-2 border-slate-200 font-black px-4 py-3.5 rounded-2xl hover:bg-slate-200 transition">Batal</button>
                 </div>
+
+                <p class="text-slate-400 text-xs mt-4 font-semibold">📁 File tersimpan di folder <strong>Unduhan / Downloads</strong></p>
             </div>
         </div>
     </div>
@@ -2506,18 +2522,34 @@ let _pdfDataUri = null;
 
 function exportToPDF() {
     showLoading(true, "Menyiapkan PDF...");
-    html2pdf().set({
-        margin: [15,10,15,10], filename: 'Laporan_Belajar.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, windowWidth: 800, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(document.getElementById('pdfContent')).outputPdf('datauristring')
-        .then((dataUri) => {
-            showLoading(false);
-            _pdfDataUri = dataUri;
-            document.getElementById('pdfModal').classList.remove('hide');
-        })
-        .catch(() => { showLoading(false); showToast("Gagal membuat PDF.", "error"); });
+    // Beri waktu UI render loading dulu sebelum proses berat dimulai
+    setTimeout(() => {
+        const el = document.getElementById('pdfContent');
+        html2pdf().set({
+            margin: [15,10,15,10],
+            filename: 'Laporan_Belajar.pdf',
+            image: { type: 'jpeg', quality: 0.80 },
+            html2canvas: {
+                scale: 1,           // Turunkan dari 2 → 1 agar tidak freeze di WebView
+                windowWidth: 800,
+                scrollY: 0,
+                useCORS: true,
+                logging: false,
+                removeContainer: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).from(el).outputPdf('datauristring')
+            .then((dataUri) => {
+                showLoading(false);
+                _pdfDataUri = dataUri;
+                document.getElementById('pdfModal').classList.remove('hide');
+            })
+            .catch((err) => {
+                showLoading(false);
+                showToast("Gagal membuat PDF. Coba lagi.", "error");
+                console.error(err);
+            });
+    }, 300); // delay 300ms agar loading spinner sempat tampil
 }
 
 function closePdfModal() {
@@ -2536,36 +2568,50 @@ function dataUriToFile(dataUri, filename) {
     return new File([u8arr], filename, { type: mime });
 }
 
-// Share via Web Share API (paling native di Android / Website2APK)
+// Opsi 1: Share via Web Share API → dialog native Android muncul (WA, Drive, Files, dll)
 async function sharePDF() {
     if (!_pdfDataUri) return;
     const file = dataUriToFile(_pdfDataUri, 'Laporan_Belajar.pdf');
     try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Laporan Belajar', text: 'Laporan Les Privat SAINSPIQ' });
+            await navigator.share({
+                files: [file],
+                title: 'Laporan Belajar SAINSPIQ',
+                text: 'Laporan Les Privat'
+            });
             closePdfModal();
-            showToast("PDF berhasil disimpan/dibagikan!");
+            showToast("✅ PDF berhasil disimpan/dibagikan!");
             return;
         }
     } catch(e) {
-        if (e.name !== 'AbortError') downloadPDF();
-        return;
+        if (e.name === 'AbortError') return; // user cancel, tidak perlu fallback
+        // error lain → coba buka di Chrome
     }
-    // Fallback jika Web Share API tidak support file
-    downloadPDF();
+    // Fallback: buka di Chrome
+    bukadiChrome();
 }
 
-// Download via data URI (fallback)
-function downloadPDF() {
+// Opsi 2: Buka PDF di browser Chrome bawaan Android
+// Di Chrome, user bisa tekan ⋮ → Download → file masuk ke folder Unduhan
+function bukadiChrome() {
     if (!_pdfDataUri) return;
-    const link = document.createElement('a');
-    link.href = _pdfDataUri;
-    link.download = 'Laporan_Belajar.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
     closePdfModal();
-    showToast("PDF sedang diunduh...");
+    // Buat halaman HTML sederhana berisi iframe PDF, buka di tab baru (Chrome)
+    const html = '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">'
+        + '<title>Laporan PDF - SAINSPIQ</title>'
+        + '<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1e1e1e;display:flex;flex-direction:column;height:100vh}'
+        + '.bar{background:#2563eb;color:white;padding:14px 16px;font-family:sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px;flex-shrink:0}'
+        + '.hint{background:#1d4ed8;color:#bfdbfe;font-size:11px;padding:8px 16px;font-family:sans-serif;flex-shrink:0}'
+        + 'iframe{flex:1;width:100%;border:none}'
+        + '</style></head><body>'
+        + '<div class="bar"><span>📄</span> Laporan Belajar SAINSPIQ</div>'
+        + '<div class="hint">💡 Tekan menu ⋮ pojok kanan atas Chrome → "Download" untuk menyimpan ke Unduhan</div>'
+        + '<iframe src="' + _pdfDataUri + '"></iframe>'
+        + '</body></html>';
+    const blob = new Blob([html], {type: 'text/html'});
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+    showToast("PDF terbuka di Chrome — tekan ⋮ → Download");
 }
 </script>
 </body>
