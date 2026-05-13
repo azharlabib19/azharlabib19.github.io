@@ -1,7 +1,33 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    
+    <!-- ✅ AUTO CACHE BUSTER - Ganti APP_VERSION setiap ada update -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        const APP_VERSION = "2025.05.13-v1"; // ← GANTI INI setiap push update ke GitHub
+
+        const savedVersion = localStorage.getItem('app_version');
+        if (savedVersion !== APP_VERSION) {
+            localStorage.setItem('app_version', APP_VERSION);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    regs.forEach(r => r.unregister());
+                });
+            }
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    keys.forEach(key => caches.delete(key));
+                });
+            }
+            setTimeout(() => location.reload(true), 100);
+        }
+    </script>
+    <!-- ✅ SELESAI Cache Buster -->
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aplikasi Jurnal Les Privat - LBB SAINSPIQ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -264,7 +290,6 @@
                 <p class="text-slate-600 text-sm mb-4 font-bold">Pilih cara download:</p>
 
                 <div class="flex flex-col gap-3">
-                    <!-- Opsi 0: Download langsung ke Unduhan (paling andal) -->
                     <button onclick="downloadPDFDirect()" class="w-full bg-gradient-to-r from-rose-600 to-red-500 border-2 border-rose-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
                         <i class="fa-solid fa-download text-lg"></i>
                         <div class="text-left">
@@ -272,7 +297,6 @@
                             <div class="text-xs font-semibold opacity-80">Langsung tersimpan di HP / APK</div>
                         </div>
                     </button>
-                    <!-- Opsi 1: Share API (simpan ke Files/Drive/WA) -->
                     <button onclick="sharePDF()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 border-2 border-emerald-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
                         <i class="fa-solid fa-share-nodes text-lg"></i>
                         <div class="text-left">
@@ -280,7 +304,6 @@
                             <div class="text-xs font-semibold opacity-80">WhatsApp, Drive, Email, dll</div>
                         </div>
                     </button>
-                    <!-- Opsi 2: Buka di Chrome → download dari sana -->
                     <button onclick="bukadiChrome()" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 border-2 border-blue-400 text-white font-black px-4 py-4 rounded-2xl hover:opacity-90 shadow-lg transition flex items-center justify-center gap-3 text-sm">
                         <i class="fa-solid fa-globe text-lg"></i>
                         <div class="text-left">
@@ -392,11 +415,10 @@
         <div class="login-orb w-80 h-80 bg-blue-300/20" style="bottom:5%;right:-10%"></div>
 
         <div class="login-card rounded-[2.5rem] p-10 w-full max-w-md relative z-10">
-            <!-- Logo/Brand -->
             <div class="text-center mb-10">
                 <div class="inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-6 shadow-2xl"
                     style="background:linear-gradient(135deg,#3b82f6,#1e3a8a);border:3px solid #bfdbfe;">
-                    <i class="fa-solid fa-graduation-cap text-5xl" style="color:#ffffff; drop-shadow: 0 4px 6px rgba(0,0,0,0.5);"></i>
+                    <i class="fa-solid fa-graduation-cap text-5xl" style="color:#ffffff;"></i>
                 </div>
                 <h1 class="font-black text-white text-3xl tracking-tight mb-2" style="font-family:'DM Serif Display',serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">LBB SAINSPIQ</h1>
                 <div class="inline-block bg-white/20 px-5 py-2 rounded-full backdrop-blur-md border-2 border-white/30">
@@ -439,14 +461,12 @@
     <!-- ===== MAIN LAYOUT ===== -->
     <div id="mainLayout" class="hide absolute inset-0 w-full h-full flex flex-col overflow-hidden" style="background:#f1f5f9">
 
-        <!-- CONTAINER KONTEN (SCROLLABLE) -->
         <div id="pagesContainer" class="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 relative z-10 w-full">
             <div class="max-w-4xl mx-auto space-y-6 pb-28 relative">
 
                 <!-- ===== DASHBOARD ===== -->
                 <div id="pageDashboard" class="page-content hide">
 
-                    <!-- HEADER BISA DI-SCROLL MENGIKUTI KONTEN DASHBOARD -->
                     <div class="app-header px-6 pt-6 pb-8 flex justify-between items-center -mx-4 md:-mx-6 mb-6">
                         <div class="header-orb-1"></div>
                         <div class="header-orb-2"></div>
@@ -463,11 +483,9 @@
                                 <i class="fa-solid fa-bell text-sm"></i>
                                 <span id="notifBadge" class="hide absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center shadow-md border-2 border-white pulse-red">0</span>
                             </button>
-                            <!-- Desktop User -->
                             <div class="text-xs bg-white/20 border-2 border-white/30 text-white px-4 py-2.5 rounded-xl font-black hidden sm:flex items-center gap-2 shadow-lg backdrop-blur-md tracking-wide">
                                 Halo, <span id="desktopUserName"></span>
                             </div>
-                            <!-- Mobile User -->
                             <div class="text-[11px] bg-white/20 border-2 border-white/30 text-white px-3 py-2.5 rounded-xl font-black sm:hidden flex items-center justify-center shadow-lg backdrop-blur-md tracking-wide">
                                 Halo, <span id="mobileUserName"></span>
                             </div>
@@ -476,7 +494,6 @@
 
                     <!-- Banner Motivasi -->
                     <div class="welcome-banner bg-white border-2 border-blue-100 p-6 md:p-8 mb-6 flex items-center gap-6 relative rounded-[2rem] shadow-[0_20px_40px_-15px_rgba(37,99,235,0.2)] overflow-hidden">
-                        <!-- Abstract Shapes -->
                         <div class="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full blur-3xl opacity-80 pointer-events-none"></div>
                         <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-cyan-100 to-blue-100 rounded-full blur-3xl opacity-80 pointer-events-none"></div>
                         
@@ -510,9 +527,7 @@
                                 <i class="fa-solid fa-plus-circle text-sm"></i> Tambah
                             </button>
                         </div>
-                        <div id="lowonganList" class="divide-y divide-slate-100 bg-slate-50/50">
-                            <!-- Injected HTML will go here -->
-                        </div>
+                        <div id="lowonganList" class="divide-y divide-slate-100 bg-slate-50/50"></div>
                     </div>
 
                     <!-- Grafik Progress Pertemuan -->
@@ -766,7 +781,6 @@
                         <h2 class="text-2xl font-black text-slate-900 tracking-tight pr-4">Input Jurnal Sesi</h2>
                     </div>
 
-                    <!-- Banner Aturan / Peringatan Admin DIPINDAHKAN KESINI -->
                     <div id="rekapAdminBanner" class="mb-6 relative rounded-[1.5rem] border-2 border-rose-300 bg-white shadow-lg overflow-hidden group hover:border-rose-400 transition">
                         <div class="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-b from-rose-500 to-red-600"></div>
                         <div class="px-6 py-5 flex items-start gap-4">
@@ -885,14 +899,12 @@
 
                     <div id="reportContainer" class="hide">
                         <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-[2rem] p-8 text-center mb-6 shadow-xl relative overflow-hidden">
-                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iOCIgaGVpZ2h0PSI4IiBmaWxsPSIjZmZmIiAvPgo8Y2lyY2xlIGN4PSIyIiBjeT0iMiIgcj0iMSIgZmlsbD0iI2U1ZTdmYiIgLz4KPC9zdmc+')] opacity-60"></div>
-                            
+                            <div class="absolute inset-0 opacity-60"></div>
                             <div class="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center mx-auto mb-5 shadow-xl shadow-indigo-300 relative z-10 transform rotate-3 border-2 border-blue-300">
                                 <i class="fa-solid fa-file-circle-check text-4xl text-white"></i>
                             </div>
                             <h3 class="font-black text-indigo-950 text-2xl mb-3 relative z-10">Laporan Berhasil Disusun! 🎉</h3>
                             <p class="text-indigo-800 text-sm mb-8 font-black relative z-10 bg-white inline-block px-5 py-2.5 rounded-full border-2 border-indigo-100 shadow-sm tracking-wide">Total kehadiran: <strong class="text-indigo-600 text-xl mx-1" id="reportVisualTotalHadir">0</strong> sesi.</p>
-                            
                             <div class="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
                                 <button onclick="exportToPDF()" class="bg-gradient-to-r from-rose-600 to-red-600 border-2 border-rose-400 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-rose-500/40 hover:opacity-90 transition flex items-center justify-center gap-3 text-sm">
                                     <i class="fa-solid fa-file-pdf text-2xl"></i> Download PDF
@@ -904,13 +916,11 @@
                     <!-- PDF hidden -->
                     <div style="position:absolute;left:0;top:0;width:794px;z-index:-9999;opacity:0;pointer-events:none;" aria-hidden="true">
                         <div id="pdfContent" style="font-family:Arial,Helvetica,sans-serif;background:#fff;padding:0 48px;width:794px;box-sizing:border-box;color:#111;margin:0;">
-                        <!-- Header -->
                             <div style="text-align:center;border-bottom:3px solid #1e3a8a;padding-bottom:14px;margin-bottom:20px;padding-top:20px;">
                                 <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#64748b;text-transform:uppercase;margin-bottom:6px;">LBB SAINSPIQ · Jurnal Les Privat</div>
                                 <div style="font-size:20px;font-weight:900;color:#1e3a8a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Laporan Hasil Belajar</div>
                                 <div id="reportDateRange" style="font-size:12px;color:#64748b;font-weight:600;">Periode: -</div>
                             </div>
-                            <!-- Info Siswa -->
                             <table style="width:698px;max-width:698px;border-collapse:collapse;margin-bottom:20px;">
                                 <tr>
                                     <td style="background:#f0f4ff;border:1px solid #c7d7fd;border-radius:8px;padding:12px 14px;width:380px;">
@@ -930,7 +940,6 @@
                                     </td>
                                 </tr>
                             </table>
-                            <!-- Tabel -->
                             <table style="width:698px;max-width:698px;border-collapse:collapse;font-size:12px;table-layout:fixed;">
                                 <colgroup>
                                     <col style="width:90px;">
@@ -948,7 +957,6 @@
                                 </thead>
                                 <tbody id="reportTableBody" style="color:#1f2937;"></tbody>
                             </table>
-                            <!-- Tanda Tangan -->
                             <div style="margin-top:40px;display:flex;justify-content:flex-end;">
                                 <div style="text-align:center;min-width:180px;">
                                     <div style="font-size:12px;color:#4b5563;margin-bottom:56px;">Mengetahui, Pimpinan Les</div>
@@ -982,19 +990,15 @@
                             </div>
                         </div>
                     </div>
-                </div><!-- /pageRekap -->
+                </div>
 
                 <!-- ===== PROFIL GURU ===== -->
                 <div id="pageProfil" class="page-content hide">
-                    <!-- Modern 3D Profile Header -->
                     <div class="profile-header mb-8 mt-2 flex flex-col items-center text-center relative z-10 rounded-[2.5rem] shadow-2xl py-12 overflow-hidden border-2 border-blue-400"
                         style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
-                        <!-- BG Shapes -->
                         <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-400/30 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                         <div class="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/30 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none"></div>
-                        
                         <div class="profile-avatar mb-5 relative z-10 border-4 border-white shadow-2xl bg-gradient-to-br from-indigo-100 to-blue-200 text-blue-800 w-28 h-28 text-5xl font-black flex items-center justify-center rounded-full transform hover:scale-105 transition duration-300" id="profileAvatar">?</div>
-                        
                         <h2 class="font-black text-3xl tracking-tight text-white relative z-10 drop-shadow-lg" id="profileNameDisplay">–</h2>
                         <div class="flex items-center gap-2 mt-2 relative z-10 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/30">
                             <i class="fa-solid fa-circle-check text-white"></i>
@@ -1003,7 +1007,6 @@
                         <div class="mt-5 bg-white text-blue-800 border-2 border-blue-200 rounded-full px-6 py-2.5 text-sm font-black relative z-10 shadow-xl tracking-widest" id="profileUsernameDisplay">@username</div>
                     </div>
 
-                    <!-- Edit Form with Icons -->
                     <div class="space-y-1 pb-4 bg-white p-6 md:p-8 rounded-[2rem] shadow-xl border-2 border-slate-200 relative">
                         <div class="flex items-center gap-4 mb-8 border-b-2 border-slate-100 pb-5">
                             <div class="w-12 h-12 bg-blue-100 border border-blue-200 text-blue-700 rounded-xl flex items-center justify-center shadow-sm"><i class="fa-solid fa-user-pen text-xl"></i></div>
@@ -1014,27 +1017,22 @@
                             <div class="profile-field-label"><div class="label-icon-box bg-blue-100 border border-blue-200 text-blue-700"><i class="fa-solid fa-user"></i></div>Nama Lengkap</div>
                             <input type="text" id="profilNama" class="profile-field-input" placeholder="Nama lengkap Anda">
                         </div>
-
                         <div class="profile-field-card group">
                             <div class="profile-field-label"><div class="label-icon-box bg-emerald-100 border border-emerald-200 text-emerald-700"><i class="fa-solid fa-phone"></i></div>Nomor HP / WA</div>
                             <input type="tel" id="profilNoHp" class="profile-field-input" placeholder="Cth: 08123456789">
                         </div>
-
                         <div class="profile-field-card group">
                             <div class="profile-field-label"><div class="label-icon-box bg-rose-100 border border-rose-200 text-rose-700"><i class="fa-solid fa-location-dot"></i></div>Alamat Tinggal</div>
                             <textarea id="profilAlamat" rows="2" class="profile-field-input" placeholder="Alamat lengkap tempat tinggal Anda"></textarea>
                         </div>
-
                         <div class="profile-field-card group">
                             <div class="profile-field-label"><div class="label-icon-box bg-amber-100 border border-amber-200 text-amber-700"><i class="fa-solid fa-book"></i></div>Mata Pelajaran Dikuasai</div>
                             <input type="text" id="profilMapel" class="profile-field-input" placeholder="Cth: Matematika, Fisika, Kimia">
                         </div>
-
                         <div class="profile-field-card group">
                             <div class="profile-field-label"><div class="label-icon-box bg-purple-100 border border-purple-200 text-purple-700"><i class="fa-solid fa-map-location-dot"></i></div>Daerah Dijangkau</div>
                             <input type="text" id="profilDaerah" class="profile-field-input" placeholder="Cth: Soreang, Margahayu, Kopo">
                         </div>
-
                         <div class="profile-field-card group">
                             <div class="profile-field-label"><div class="label-icon-box bg-slate-200 border border-slate-300 text-slate-700"><i class="fa-solid fa-quote-left"></i></div>Bio Singkat <span class="text-slate-500 normal-case ml-2 font-bold tracking-normal">(opsional)</span></div>
                             <textarea id="profilBio" rows="3" class="profile-field-input" placeholder="Ceritakan sedikit tentang pengalaman atau keahlian mengajar Anda..."></textarea>
@@ -1049,7 +1047,7 @@
             </div>
         </div>
 
-        <!-- Modern Floating Bottom Nav (Redesign) -->
+        <!-- Bottom Nav -->
         <div class="flex-none w-full bg-white/95 backdrop-blur-xl border-t border-slate-200/80 flex justify-around items-end z-50 px-2 pb-safe absolute bottom-0 shadow-[0_-10px_30px_rgba(15,23,42,0.08)]" style="min-height:80px;padding-top:0;overflow:visible; border-top-left-radius:2rem; border-top-right-radius:2rem;" id="mobileNav"></div>
     </div>
 </div>
@@ -1058,7 +1056,6 @@
 // ============================================================
 // ⚡ KONFIGURASI
 // ============================================================
-
 const SUPABASE_URL = "https://napymkogkzwtvdjictip.supabase.co".trim();
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcHlta29na3p3dHZkamljdGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2OTM5NDIsImV4cCI6MjA5MzI2OTk0Mn0.t3r51kXGSBoZuzZh35htYzRviWZTnhukpsJbd_hjIrc".trim();
 const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1068,7 +1065,6 @@ let currentUser = null;
 let dataSiswa = [];
 let dataSesi = [];
 let dataGuru = [];
-
 
 // ============================================================
 // HELPER: HARI & JADWAL
@@ -1096,7 +1092,6 @@ function formatJadwal(siswa) {
 }
 
 function toggleHari(btn) { btn.classList.toggle('active'); }
-
 function getSelectedHari() {
     return Array.from(document.querySelectorAll('#jadwalHariGrid .hari-btn.active')).map(b=>b.dataset.hari).join(',');
 }
@@ -1110,7 +1105,6 @@ function setSelectedHari(hariStr) {
 // ============================================================
 // MODAL HELPERS
 // ============================================================
-
 let confirmCallback = null;
 function showConfirm(title, text, onConfirm) {
     document.getElementById('confirmModalTitle').innerText = title;
@@ -1147,10 +1141,7 @@ document.getElementById('promptBtnSubmit').addEventListener('click', () => {
 });
 
 function editCustomBanner() {
-    if (currentUser.role !== 'admin') {
-        showToast("Akses ditolak! Hanya admin yang dapat mengubah banner.", "error");
-        return;
-    }
+    if (currentUser.role !== 'admin') { showToast("Akses ditolak! Hanya admin yang dapat mengubah banner.", "error"); return; }
     showPrompt("Edit Banner Motivasi", "Ketikkan kata-kata penyemangat baru:", document.getElementById('bannerText').innerText, (newText) => {
         if (newText?.trim()) {
             document.getElementById('bannerText').innerText = newText;
@@ -1160,10 +1151,7 @@ function editCustomBanner() {
     });
 }
 function editRekapBanner() {
-    if (currentUser.role !== 'admin') {
-        showToast("Akses ditolak! Hanya admin yang dapat mengubah banner.", "error");
-        return;
-    }
+    if (currentUser.role !== 'admin') { showToast("Akses ditolak! Hanya admin yang dapat mengubah banner.", "error"); return; }
     showPrompt("Edit Banner Aturan / Peringatan", "Ketikkan teks aturan atau peringatan:", document.getElementById('rekapBannerText').innerText, (newText) => {
         if (newText?.trim()) {
             document.getElementById('rekapBannerText').innerText = newText;
@@ -1176,11 +1164,11 @@ function applyRekapBanner() {
     const saved = localStorage.getItem('rekapBannerText');
     if (saved) document.getElementById('rekapBannerText').innerText = saved;
 }
-
 function applyCustomBanner() {
     const saved = localStorage.getItem('customBannerText');
     if (saved) document.getElementById('bannerText').innerText = saved;
 }
+
 // ============================================================
 // UI HELPERS
 // ============================================================
@@ -1195,14 +1183,12 @@ function showToast(msg, type = "success") {
     const backdrop = document.getElementById('toastBackdrop');
     const icon = document.getElementById('toastIcon');
     const msgEl = document.getElementById('toastMsg');
-
     toast.className = type === 'success' ? 'show success' : 'show error';
     icon.innerHTML = type === 'success'
         ? '<i class="fa-solid fa-circle-check text-emerald-500"></i>'
         : '<i class="fa-solid fa-circle-xmark text-red-500"></i>';
     msgEl.innerText = msg;
     backdrop.classList.add('show');
-
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
         toast.className = type === 'success' ? 'success' : 'error';
@@ -1333,7 +1319,6 @@ async function apiCall(action, payload = {}) {
             if (error) throw error;
             return true;
         }
-        // ── LOWONGAN TUTOR ──
         else if (action === 'getLowongan') {
             const { data, error } = await dbClient.from('lowongan_tutor').select('*').order('created_at', { ascending: false });
             if (error) throw error;
@@ -1349,7 +1334,6 @@ async function apiCall(action, payload = {}) {
                 kontak: payload.kontak || null,
                 deadline: payload.deadline || null,
             };
-            // Cek apakah sudah ada (update) atau baru (insert)
             const { data: existing } = await dbClient.from('lowongan_tutor').select('id_lowongan').eq('id_lowongan', payload.id_lowongan).maybeSingle();
             if (existing) {
                 const { error } = await dbClient.from('lowongan_tutor').update(row).eq('id_lowongan', payload.id_lowongan);
@@ -1377,9 +1361,7 @@ async function apiCall(action, payload = {}) {
 async function checkMissingSesi() {
     const today = getTodayDate();
     const { data: sesiHariIni } = await dbClient.from('sesi_les').select('id_siswa,status_sesi').eq('tanggal', today);
-    // Sesi dianggap "sudah diinput" hanya jika ada entri dengan status apapun (Selesai/Batal/Reschedule/Libur)
     const sudahInputIds = new Set((sesiHariIni || []).map(s => s.id_siswa));
-    // Filter siswa berdasarkan role: guru hanya melihat siswa yang ditugaskan kepadanya
     let siswaCandidates = dataSiswa;
     if (currentUser.role === 'guru') {
         const assigned = (currentUser.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -1388,14 +1370,11 @@ async function checkMissingSesi() {
     const missingSiswa = siswaCandidates.filter(s => siswaJadwalHariIni(s) && !sudahInputIds.has(s.id_siswa));
     const bell = document.getElementById('btnNotifBell');
     const badge = document.getElementById('notifBadge');
-    // Hanya tampilkan jika jam >= 20 ATAU sudah ada sesi yang diinput sebagian (untuk konsistensi)
-    // Jika masih ada yang belum diinput, notif tetap muncul sampai semua terinput
     const jamSekarang = getCurrentHour();
     if (missingSiswa.length === 0) {
         document.getElementById('missingSesiCard').classList.add('hide');
         bell.classList.add('hide'); return;
     }
-    // Tampilkan notif jika jam >= 20, atau jika ada sesi parsial (sebagian sudah diinput, sebagian belum)
     const adaYangSudahInput = sudahInputIds.size > 0;
     if (jamSekarang < NOTIF_HOUR && !adaYangSudahInput) {
         document.getElementById('missingSesiCard').classList.add('hide');
@@ -1526,10 +1505,7 @@ function openLowonganModal(editMode = false) {
     }
     document.getElementById('lowonganModal').classList.remove('hide');
 }
-
-function closeLowonganModal() {
-    document.getElementById('lowonganModal').classList.add('hide');
-}
+function closeLowonganModal() { document.getElementById('lowonganModal').classList.add('hide'); }
 
 function editLowongan(idLowongan) {
     const item = dataLowongan.find(d => d.id_lowongan === idLowongan);
@@ -1627,7 +1603,7 @@ async function initApp() {
     document.getElementById('pageLogin').classList.add('hide');
     document.getElementById('mainLayout').classList.remove('hide');
     document.getElementById('desktopUserName').innerText = currentUser.nama_lengkap;
-    document.getElementById('mobileUserName').innerText = currentUser.nama_lengkap.split(' ')[0]; // Ambil nama depan saja untuk mobile
+    document.getElementById('mobileUserName').innerText = currentUser.nama_lengkap.split(' ')[0];
     if (currentUser.role === 'admin') {
         document.getElementById('btnEditBanner').classList.remove('hide');
         document.getElementById('btnTambahLowongan').classList.remove('hide');
@@ -1641,19 +1617,16 @@ async function initApp() {
 }
 
 // ============================================================
-// NAVIGATION (REDESIGN)
+// NAVIGATION
 // ============================================================
 function buildNavigation() {
     let mNav = '';
-
     if (currentUser.role === 'guru') {
-        // GURU NAV: Beranda | Rekap | [FAB Absen] | Profil | Keluar
         mNav += navBtn('dashboard', 'fa-house-chimney', 'Beranda');
         mNav += navBtn('rekap', 'fa-chart-pie', 'Rekap');
         mNav += navFAB('input', 'fa-pen-clip', 'Absen');
         mNav += navBtn('profil', 'fa-circle-user', 'Profil');
     } else {
-        // ADMIN NAV: Beranda | Siswa | [FAB Guru] | Rekap | Keluar
         mNav += navBtn('dashboard', 'fa-house-chimney', 'Beranda');
         mNav += navBtn('siswa', 'fa-users', 'Siswa');
         mNav += navFAB('guru', 'fa-chalkboard-user', 'Guru');
@@ -1693,15 +1666,11 @@ function navFAB(id, icon, text) {
 
 function navigate(page) {
     document.querySelectorAll('.page-content').forEach(el => el.classList.add('hide'));
-    
-    // Reset all normal nav buttons
     document.querySelectorAll('[id^="nav-m-"]').forEach(el => {
-        el.classList.remove('active'); 
+        el.classList.remove('active');
         el.querySelector('span:not(.nav-fab-text)')?.classList.replace('text-blue-900', 'text-slate-500');
     });
     document.querySelectorAll('[id^="nav-icon-bg-"]').forEach(el => el.classList.remove('bg-blue-100', 'text-blue-900', 'shadow-md'));
-    
-    // Reset FAB
     document.querySelectorAll('[id^="nav-fab-btn-"]').forEach(el => {
         el.style.background = '';
         el.style.boxShadow = '';
@@ -1716,20 +1685,19 @@ function navigate(page) {
     if (page === 'profil') { targetId = 'pageProfil'; loadProfil(); }
     if (targetId) document.getElementById(targetId).classList.remove('hide');
 
-    // Activate the clicked button
     const mBtn = document.getElementById(`nav-m-${page}`);
     const mBg = document.getElementById(`nav-icon-bg-${page}`);
     const mText = document.getElementById(`nav-text-${page}`);
-    
     if (mBtn) {
         mBtn.classList.add('active');
         if (mText) mText.classList.replace('text-slate-500', 'text-blue-900');
     }
     if (mBg) mBg.classList.add('bg-blue-100', 'text-blue-900', 'shadow-md');
-    
     scrollToTop();
 }
 
+// ============================================================
+// DASHBOARD
 // ============================================================
 async function loadDashboard() {
     showLoading(true);
@@ -1737,12 +1705,9 @@ async function loadDashboard() {
         dataSesi = (await apiCall('getSesi')) || [];
         dataSiswa = (await apiCall('getSiswa')) || [];
         dataGuru = (await apiCall('getGuru')) || [];
-
-        // Grafik progress untuk admin dan guru
         document.getElementById('grafikProgressSection').classList.remove('hide');
         if (currentUser.role === 'admin') {
             document.getElementById('grafikFilterWrapper').classList.remove('hide');
-            // Isi filter dropdown guru
             const guruSel = document.getElementById('grafikFilterGuru');
             guruSel.innerHTML = '<option value="ALL">Semua Tutor</option>';
             dataGuru.forEach(g => {
@@ -1752,7 +1717,6 @@ async function loadDashboard() {
             document.getElementById('grafikFilterWrapper').classList.add('hide');
         }
         renderGrafikProgress();
-
         await checkMissingSesi();
     } catch (e) {
         showToast("Gagal memuat data dashboard.", "error");
@@ -1766,24 +1730,16 @@ function renderGrafikProgress() {
     const filterGuru = currentUser.role === 'admin' ? (document.getElementById('grafikFilterGuru')?.value || 'ALL') : currentUser.username;
     const container = document.getElementById('grafikProgressContainer');
     const emptyMsg = document.getElementById('grafikEmptyMsg');
-
-    // Hanya ambil sesi Selesai
     let sesiSelesai = dataSesi.filter(s => s.status_sesi === 'Selesai');
     if (filterGuru !== 'ALL') sesiSelesai = sesiSelesai.filter(s => s.id_guru === filterGuru);
-
     if (sesiSelesai.length === 0) {
         container.innerHTML = '';
         emptyMsg.classList.remove('hide');
         return;
     }
     emptyMsg.classList.add('hide');
-
-    // Kelompokkan per guru -> per siswa -> hitung pertemuan, urutkan tanggal
-    const guruMap = {}; // { id_guru: { nama_guru, siswaMap: { id_siswa: { nama_siswa, count, paket } } } }
+    const guruMap = {};
     const allSorted = [...dataSesi].filter(s => s.status_sesi === 'Selesai').sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
-
-    // Hitung pertemuan per guru per siswa
-    const counter = {};
     allSorted.forEach(s => {
         if (filterGuru !== 'ALL' && s.id_guru !== filterGuru) return;
         const gKey = s.id_guru;
@@ -1791,38 +1747,26 @@ function renderGrafikProgress() {
         if (!guruMap[gKey]) guruMap[gKey] = { nama_guru: s.nama_guru, siswaMap: {} };
         if (!guruMap[gKey].siswaMap[sKey]) {
             const siswaObj = dataSiswa.find(x => x.id_siswa === sKey);
-            guruMap[gKey].siswaMap[sKey] = {
-                nama_siswa: s.nama_siswa,
-                count: 0,
-                paket: siswaObj ? ((siswaObj.sisa_sesi || 0) + 0) : 0,
-                // paket awal = selesai sudah + sisa
-            };
+            guruMap[gKey].siswaMap[sKey] = { nama_siswa: s.nama_siswa, count: 0, paket: siswaObj ? ((siswaObj.sisa_sesi || 0) + 0) : 0 };
         }
         guruMap[gKey].siswaMap[sKey].count++;
     });
-
-    // Hitung total paket (selesai + sisa) per siswa
     dataSiswa.forEach(sw => {
         const selesaiCount = sesiSelesai.filter(s => s.id_siswa === sw.id_siswa).length;
-        // paket awal = sudah selesai + sisa saat ini
         Object.values(guruMap).forEach(g => {
             if (g.siswaMap[sw.id_siswa]) {
                 g.siswaMap[sw.id_siswa].paket = selesaiCount + (parseInt(sw.sisa_sesi) || 0);
             }
         });
     });
-
-    // Warna per tutor
     const colors = ['linear-gradient(to right, #3b82f6, #60a5fa)', 'linear-gradient(to right, #10b981, #34d399)', 'linear-gradient(to right, #f59e0b, #fbbf24)', 'linear-gradient(to right, #ef4444, #f87171)', 'linear-gradient(to right, #8b5cf6, #a78bfa)', 'linear-gradient(to right, #ec4899, #f472b6)'];
     const guruKeys = Object.keys(guruMap);
-
     let html = '';
     guruKeys.forEach((gKey, gi) => {
         const guru = guruMap[gKey];
         const color = colors[gi % colors.length];
         const siswaKeys = Object.keys(guru.siswaMap);
         const totalSesiGuru = siswaKeys.reduce((acc, sk) => acc + guru.siswaMap[sk].count, 0);
-
         html += `
         <div class="mb-5 bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
             <div class="flex items-center justify-between mb-4 border-b-2 border-slate-50 pb-3">
@@ -1833,13 +1777,11 @@ function renderGrafikProgress() {
                 <span class="text-[11px] bg-slate-100 border border-slate-200 text-slate-600 font-black px-3 py-1.5 rounded-lg">${totalSesiGuru} sesi aktif</span>
             </div>
             <div class="space-y-4">`;
-
         siswaKeys.forEach(sKey => {
             const sw = guru.siswaMap[sKey];
             const pct = sw.paket > 0 ? Math.min(100, Math.round((sw.count / sw.paket) * 100)) : 0;
             const paketLabel = sw.paket > 0 ? `${sw.count} / ${sw.paket} sesi` : `${sw.count} sesi`;
             const urgentClass = pct >= 80 ? 'text-red-600 bg-red-50 border border-red-200' : pct >= 50 ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-emerald-700 bg-emerald-50 border border-emerald-200';
-
             html += `
                 <div>
                     <div class="flex justify-between items-center mb-2">
@@ -1857,10 +1799,8 @@ function renderGrafikProgress() {
                     </div>
                 </div>`;
         });
-
         html += `</div></div>`;
     });
-
     container.innerHTML = html;
 }
 
@@ -1887,9 +1827,8 @@ function checkSisaSesi() {
     const w = document.getElementById('warningSisaSesi');
     if (!id) { w.classList.add('hide'); return; }
     const s = dataSiswa.find(x => x.id_siswa === id);
-    if (s && (s.sisa_sesi <= 0 || s.sisa_sesi == null)) {
-        w.classList.remove('hide');
-    } else { w.classList.add('hide'); }
+    if (s && (s.sisa_sesi <= 0 || s.sisa_sesi == null)) { w.classList.remove('hide'); }
+    else { w.classList.add('hide'); }
 }
 
 async function loadDataSiswaPage() {
@@ -2141,7 +2080,6 @@ function loadProfil() {
     document.getElementById('profileNameDisplay').innerText = nama || '–';
     document.getElementById('profileRoleDisplay').innerText = currentUser.role === 'admin' ? 'Administrator' : 'Tutor / Guru';
     document.getElementById('profileUsernameDisplay').innerText = '@' + (currentUser.username || '');
-
     document.getElementById('profilNama').value = nama;
     document.getElementById('profilNoHp').value = currentUser.no_hp || '';
     document.getElementById('profilAlamat').value = currentUser.alamat || '';
@@ -2165,34 +2103,27 @@ async function saveProfil() {
     try {
         const { error } = await dbClient.from('users').update(payload).eq('username', currentUser.username);
         if (error) throw error;
-        // Update local currentUser
         Object.assign(currentUser, payload);
         localStorage.setItem('les_user', JSON.stringify(currentUser));
-        // Update header display
         document.getElementById('desktopUserName').innerText = nama;
         document.getElementById('mobileUserName').innerText = nama.split(' ')[0];
-        // Refresh profile header
         loadProfil();
         showToast("Profil berhasil disimpan! ✅");
-    } catch (e) {
-        showToast("Gagal menyimpan: " + e.message, "error");
-    }
+    } catch (e) { showToast("Gagal menyimpan: " + e.message, "error"); }
     showLoading(false);
 }
 
-
-
+// ============================================================
+// REKAP & RIWAYAT
+// ============================================================
 async function loadRiwayat() {
     showLoading(true);
     try {
         dataSesi = (await apiCall('getSesi')) || [];
         let filtered = dataSesi;
         if (currentUser.role === 'guru') filtered = dataSesi.filter(s => s.id_guru === currentUser.username);
-
-        // Hitung pertemuan ke- per tutor per siswa (hanya status Selesai yang dihitung)
-        // Urutkan semua sesi dari lama ke baru untuk menghitung urutan
         const allSorted = [...dataSesi].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
-        const pertemuanMap = {}; // key: id_guru + '_' + id_siswa => counter
+        const pertemuanMap = {};
         const pertemuanByIdSesi = {};
         allSorted.forEach(s => {
             const key = s.id_guru + '_' + s.id_siswa;
@@ -2201,29 +2132,23 @@ async function loadRiwayat() {
                 pertemuanMap[key]++;
                 pertemuanByIdSesi[s.id_sesi] = pertemuanMap[key];
             } else {
-                pertemuanByIdSesi[s.id_sesi] = null; // bukan Selesai, tidak dihitung
+                pertemuanByIdSesi[s.id_sesi] = null;
             }
         });
-
         const statusColors = {
             'Selesai': 'bg-emerald-50 border-2 border-emerald-200 text-emerald-800 shadow-sm',
             'Batal': 'bg-red-50 border-2 border-red-200 text-red-800 shadow-sm',
             'Reschedule': 'bg-amber-50 border-2 border-amber-200 text-amber-800 shadow-sm',
             'Libur': 'bg-slate-100 border-2 border-slate-300 text-slate-700 shadow-sm'
         };
-
-        // Urutkan filtered dari terbaru ke terlama untuk tampilan
         const filteredSorted = [...filtered].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
         let html = '';
         filteredSorted.forEach(s => {
             const badge = statusColors[s.status_sesi] || 'bg-slate-50 text-slate-600';
             const canEdit = currentUser.role === 'admin' || currentUser.username === s.id_guru;
             const noPertemuan = pertemuanByIdSesi[s.id_sesi];
             const pertemuanBadge = noPertemuan
-                ? `<span class="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border-2 border-blue-200 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-sm">
-                       <i class="fa-solid fa-bolt text-blue-500"></i> Ke-${noPertemuan}
-                   </span>`
+                ? `<span class="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border-2 border-blue-200 text-[11px] font-black px-3 py-1.5 rounded-xl shadow-sm"><i class="fa-solid fa-bolt text-blue-500"></i> Ke-${noPertemuan}</span>`
                 : `<span class="text-slate-400 text-[11px] italic font-bold">—</span>`;
             html += `
                 <tr>
@@ -2302,7 +2227,6 @@ async function generateReport() {
         let hadir = 0, html = '';
         filtered.forEach((s, idx) => {
             if (s.status_sesi === 'Selesai') hadir++;
-            // Note: Menambahkan white-space:nowrap di tanggal dan text-align:justify di kolom jurnal agar rapi
             html += `<tr style="border-bottom:1px solid #e5e7eb;${idx%2===1?'background:#f9fafb;':''}">
                 <td style="padding:10px;vertical-align:top;white-space:nowrap;font-size:12px;">${s.tanggal}</td>
                 <td style="padding:10px;vertical-align:top;word-break:break-word;font-size:12px;">${s.nama_guru}</td>
@@ -2326,6 +2250,9 @@ async function generateReport() {
     showLoading(false);
 }
 
+// ============================================================
+// PDF EXPORT
+// ============================================================
 let _pdfDataUri = null;
 let _pdfFileName = 'Laporan_Belajar.pdf';
 
@@ -2333,7 +2260,6 @@ function getPdfFileName() {
     const namaSiswa = document.getElementById('reportSiswaName')?.innerText?.trim() || '';
     const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
     if (namaSiswa && namaSiswa !== 'Semua Siswa' && namaSiswa !== '-') {
-        // Bersihkan nama: hapus karakter non-alfanumerik selain spasi, ganti spasi dgn _
         const bersih = namaSiswa.replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_');
         return `Rekap_${bersih}_${today}.pdf`;
     }
@@ -2343,82 +2269,40 @@ function getPdfFileName() {
 function exportToPDF() {
     showLoading(true, "Menyiapkan PDF...");
     _pdfFileName = getPdfFileName();
-    // Beri waktu UI render loading dulu sebelum proses berat dimulai
     setTimeout(() => {
         const el = document.getElementById('pdfContent');
-        // Reset any transform/offset yang bisa bikin margin geser
-        const prevStyle = el.getAttribute('style');
         el.style.transform = 'none';
         el.style.position = 'static';
         html2pdf().set({
-            margin: [15, 0, 15, 0],   // Margin atas-bawah 15mm. Kiri-kanan diatur dari padding HTML
+            margin: [15, 0, 15, 0],
             filename: _pdfFileName,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                windowWidth: 794,
-                width: 794,
-                scrollX: 0,
-                scrollY: 0,
-                useCORS: true,
-                logging: false,
-                removeContainer: true,
-                backgroundColor: '#ffffff'
-            },
+            html2canvas: { scale: 2, windowWidth: 794, width: 794, scrollX: 0, scrollY: 0, useCORS: true, logging: false, removeContainer: true, backgroundColor: '#ffffff' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).from(el).outputPdf('datauristring')
             .then((dataUri) => {
                 showLoading(false);
                 _pdfDataUri = dataUri;
-                // Cek apakah berjalan di dalam WebView APK atau browser biasa
-                const isWebView = /wv|WebView/.test(navigator.userAgent) || 
-                    (typeof Android !== 'undefined') ||
-                    window.navigator.userAgent.indexOf('Android') > -1 && !window.chrome;
-                if (isWebView) {
-                    // Di WebView APK: langsung coba download / share
-                    tryDownloadInWebView();
-                } else {
-                    document.getElementById('pdfModal').classList.remove('hide');
-                }
+                const isWebView = /wv|WebView/.test(navigator.userAgent) || (typeof Android !== 'undefined') || window.navigator.userAgent.indexOf('Android') > -1 && !window.chrome;
+                if (isWebView) { tryDownloadInWebView(); }
+                else { document.getElementById('pdfModal').classList.remove('hide'); }
             })
-            .catch((err) => {
-                showLoading(false);
-                showToast("Gagal membuat PDF. Coba lagi.", "error");
-                console.error(err);
-            });
+            .catch((err) => { showLoading(false); showToast("Gagal membuat PDF. Coba lagi.", "error"); console.error(err); });
     }, 300);
 }
 
-// Fungsi khusus untuk download di dalam WebView APK
 function tryDownloadInWebView() {
     if (!_pdfDataUri) return;
-    // Coba Web Share API dulu (paling kompatibel di Android)
     const file = dataUriToFile(_pdfDataUri, _pdfFileName);
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-            files: [file],
-            title: 'Laporan Belajar SAINSPIQ',
-            text: 'Laporan Les Privat'
-        }).then(() => {
-            showToast("✅ PDF berhasil disimpan/dibagikan!");
-        }).catch((e) => {
-            if (e.name !== 'AbortError') {
-                // fallback ke modal pilihan
-                document.getElementById('pdfModal').classList.remove('hide');
-            }
-        });
-    } else {
-        // Langsung download jika share API tidak tersedia
-        downloadPDFDirect();
-    }
+        navigator.share({ files: [file], title: 'Laporan Belajar SAINSPIQ', text: 'Laporan Les Privat' })
+            .then(() => { showToast("✅ PDF berhasil disimpan/dibagikan!"); })
+            .catch((e) => { if (e.name !== 'AbortError') { document.getElementById('pdfModal').classList.remove('hide'); } });
+    } else { downloadPDFDirect(); }
 }
 
-function closePdfModal() {
-    document.getElementById('pdfModal').classList.add('hide');
-    _pdfDataUri = null;
-}
+function closePdfModal() { document.getElementById('pdfModal').classList.add('hide'); _pdfDataUri = null; }
 
-// Konversi dataURI ke Blob/File
 function dataUriToFile(dataUri, filename) {
     const arr = dataUri.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
@@ -2429,30 +2313,20 @@ function dataUriToFile(dataUri, filename) {
     return new File([u8arr], filename, { type: mime });
 }
 
-// Opsi 1: Share via Web Share API → dialog native Android muncul (WA, Drive, Files, dll)
 async function sharePDF() {
     if (!_pdfDataUri) return;
     const file = dataUriToFile(_pdfDataUri, _pdfFileName);
     try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: 'Laporan Belajar SAINSPIQ',
-                text: 'Laporan Les Privat'
-            });
+            await navigator.share({ files: [file], title: 'Laporan Belajar SAINSPIQ', text: 'Laporan Les Privat' });
             closePdfModal();
             showToast("✅ PDF berhasil disimpan/dibagikan!");
             return;
         }
-    } catch(e) {
-        if (e.name === 'AbortError') return; // user cancel, tidak perlu fallback
-        // error lain → coba download langsung
-    }
-    // Fallback: download langsung via <a> tag
+    } catch(e) { if (e.name === 'AbortError') return; }
     downloadPDFDirect();
 }
 
-// Download langsung — simpan file ke folder Unduhan HP
 function downloadPDFDirect() {
     if (!_pdfDataUri) return;
     try {
@@ -2465,44 +2339,26 @@ function downloadPDFDirect() {
         const blob = new Blob([u8arr], {type: mime});
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = _pdfFileName;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { 
-            try { URL.revokeObjectURL(blobUrl); } catch(e){}
-            try { a.remove(); } catch(e){}
-        }, 5000);
+        a.href = blobUrl; a.download = _pdfFileName; a.style.display = 'none';
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { try { URL.revokeObjectURL(blobUrl); } catch(e){} try { a.remove(); } catch(e){} }, 5000);
         closePdfModal();
         showToast("✅ PDF disimpan ke folder Unduhan!");
     } catch(e) {
-        console.error('downloadPDFDirect error:', e);
-        // Fallback: coba via dataUri langsung
         try {
             const a = document.createElement('a');
-            a.href = _pdfDataUri;
-            a.download = _pdfFileName;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
+            a.href = _pdfDataUri; a.download = _pdfFileName; a.style.display = 'none';
+            document.body.appendChild(a); a.click();
             setTimeout(() => { try { a.remove(); } catch(e){} }, 3000);
-            closePdfModal();
-            showToast("✅ PDF sedang diunduh...");
-        } catch(e2) {
-            // Last resort: buka di Chrome
-            bukadiChrome();
-        }
+            closePdfModal(); showToast("✅ PDF sedang diunduh...");
+        } catch(e2) { bukadiChrome(); }
     }
 }
 
-// Opsi: Buka PDF di browser Chrome bawaan Android
-// Di Chrome, user bisa tekan ⋮ → Download → file masuk ke folder Unduhan
 function bukadiChrome() {
     if (!_pdfDataUri) return;
     closePdfModal();
     try {
-        // Cara 1: Buat Blob PDF dan buka di tab baru
         const arr = _pdfDataUri.split(',');
         const mime = arr[0].match(/:(.*?);/)[1];
         const bstr = atob(arr[1]);
@@ -2512,31 +2368,21 @@ function bukadiChrome() {
         const blob = new Blob([u8arr], {type: 'application/pdf'});
         const blobUrl = URL.createObjectURL(blob);
         const win = window.open(blobUrl, '_blank');
-        if (!win) {
-            // Jika popup diblokir, buka halaman wrapper HTML
-            bukaHalamanPDFWrapper();
-        } else {
-            showToast("PDF terbuka — tekan ⋮ → Download untuk simpan");
-        }
-    } catch(e) {
-        bukaHalamanPDFWrapper();
-    }
+        if (!win) { bukaHalamanPDFWrapper(); }
+        else { showToast("PDF terbuka — tekan ⋮ → Download untuk simpan"); }
+    } catch(e) { bukaHalamanPDFWrapper(); }
 }
 
-// Fallback: Buka halaman HTML wrapper dengan iframe PDF
 function bukaHalamanPDFWrapper() {
     if (!_pdfDataUri) return;
-    const html = '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">'
-        + '<title>Laporan PDF - SAINSPIQ</title>'
+    const html = '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Laporan PDF - SAINSPIQ</title>'
         + '<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1e1e1e;display:flex;flex-direction:column;height:100vh}'
         + '.bar{background:#2563eb;color:white;padding:14px 16px;font-family:sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px;flex-shrink:0}'
         + '.hint{background:#1d4ed8;color:#bfdbfe;font-size:11px;padding:8px 16px;font-family:sans-serif;flex-shrink:0}'
-        + 'iframe{flex:1;width:100%;border:none}'
-        + '</style></head><body>'
+        + 'iframe{flex:1;width:100%;border:none}</style></head><body>'
         + '<div class="bar"><span>📄</span> ' + _pdfFileName + '</div>'
         + '<div class="hint">💡 Tekan menu ⋮ pojok kanan atas → "Download" untuk menyimpan ke Unduhan</div>'
-        + '<iframe src="' + _pdfDataUri + '"></iframe>'
-        + '</body></html>';
+        + '<iframe src="' + _pdfDataUri + '"></iframe></body></html>';
     const blob = new Blob([html], {type: 'text/html'});
     const blobUrl = URL.createObjectURL(blob);
     window.open(blobUrl, '_blank');
