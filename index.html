@@ -653,7 +653,7 @@
                                 </div>
                             </div>
                             <p class="text-xs text-blue-700 font-bold mt-4 flex items-start gap-2 bg-blue-50 p-3.5 rounded-xl border border-blue-200">
-                                <i class="fa-solid fa-circle-info mt-0.5 text-blue-500"></i> <span>Jadwal ini memicu notifikasi wajib isi jika sesi belum diinput setelah jam 20.00 malam.</span>
+                                <i class="fa-solid fa-circle-info mt-0.5 text-blue-500"></i> <span>Jadwal ini memicu notifikasi wajib isi jika sesi belum diinput setelah jam 08.00 pagi.</span>
                             </p>
                         </div>
                         <div class="flex gap-4 relative z-10 pt-4">
@@ -1062,7 +1062,7 @@
 const SUPABASE_URL = "https://napymkogkzwtvdjictip.supabase.co".trim();
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hcHlta29na3p3dHZkamljdGlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2OTM5NDIsImV4cCI6MjA5MzI2OTk0Mn0.t3r51kXGSBoZuzZh35htYzRviWZTnhukpsJbd_hjIrc".trim();
 const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const NOTIF_HOUR = 20;
+const NOTIF_HOUR = 8;
 
 let currentUser = null;
 let dataSiswa = [];
