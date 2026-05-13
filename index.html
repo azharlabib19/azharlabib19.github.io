@@ -146,15 +146,6 @@
         .header-orb-1 { position: absolute; top: -30px; left: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.2); border-radius: 50%; filter: blur(20px); }
         .header-orb-2 { position: absolute; bottom: -20px; right: 20px; width: 150px; height: 150px; background: rgba(147,197,253,0.3); border-radius: 50%; filter: blur(25px); }
 
-        /* ── CARDS ── */
-        .stat-card {
-            background: white; border-radius: 24px; border: 2px solid rgba(226,232,240,0.8);
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative; overflow: hidden;
-        }
-        .stat-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 35px -5px rgba(0,0,0,0.1); border-color: var(--primary-light); }
-
         /* ── NAV ── */
         .nav-btn { transition: all 0.2s; }
         .nav-btn.active .nav-pill {
@@ -522,11 +513,6 @@
                         <div id="lowonganList" class="divide-y divide-slate-100 bg-slate-50/50">
                             <!-- Injected HTML will go here -->
                         </div>
-                    </div>
-
-                    <!-- Stats Grid -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5 mb-6" id="dashboardStats">
-                        <!-- Injected HTML -->
                     </div>
 
                     <!-- Grafik Progress Pertemuan -->
@@ -1751,36 +1737,6 @@ async function loadDashboard() {
         dataSesi = (await apiCall('getSesi')) || [];
         dataSiswa = (await apiCall('getSiswa')) || [];
         dataGuru = (await apiCall('getGuru')) || [];
-        let filtered = dataSesi;
-        if (currentUser.role === 'guru') filtered = dataSesi.filter(s => s.id_guru === currentUser.username);
-        const total = filtered.length;
-        const selesai = filtered.filter(s => s.status_sesi === 'Selesai').length;
-        const batal = filtered.filter(s => s.status_sesi === 'Batal').length;
-        const reschedule = filtered.filter(s => s.status_sesi === 'Reschedule').length;
-        const label = currentUser.role === 'admin' ? 'Total Sesi' : 'Sesi Anda';
-        
-        // Memasukkan template visual stat-card langsung ke dalam dashboardStats dengan Ikon Unik & Gradien
-        document.getElementById('dashboardStats').innerHTML = `
-            <div class="stat-card p-4 flex flex-col items-center text-center">
-                <div class="w-12 h-12 rounded-[1rem] bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center mb-3 shadow-lg shadow-blue-200 transform rotate-3"><i class="fa-solid fa-layer-group text-xl"></i></div>
-                <p class="text-[10px] md:text-xs text-slate-500 font-black uppercase tracking-wider">${label}</p>
-                <h3 class="text-3xl font-black text-slate-900 mt-1">${total}</h3>
-            </div>
-            <div class="stat-card p-4 flex flex-col items-center text-center">
-                <div class="w-12 h-12 rounded-[1rem] bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center mb-3 shadow-lg shadow-emerald-200 transform -rotate-3"><i class="fa-solid fa-calendar-check text-xl"></i></div>
-                <p class="text-[10px] md:text-xs text-slate-500 font-black uppercase tracking-wider">Hadir</p>
-                <h3 class="text-3xl font-black text-slate-900 mt-1">${selesai}</h3>
-            </div>
-            <div class="stat-card p-4 flex flex-col items-center text-center">
-                <div class="w-12 h-12 rounded-[1rem] bg-gradient-to-br from-rose-400 to-red-500 text-white flex items-center justify-center mb-3 shadow-lg shadow-rose-200 transform rotate-3"><i class="fa-solid fa-calendar-xmark text-xl"></i></div>
-                <p class="text-[10px] md:text-xs text-slate-500 font-black uppercase tracking-wider">Batal</p>
-                <h3 class="text-3xl font-black text-slate-900 mt-1">${batal}</h3>
-            </div>
-            <div class="stat-card p-4 flex flex-col items-center text-center">
-                <div class="w-12 h-12 rounded-[1rem] bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center mb-3 shadow-lg shadow-amber-200 transform -rotate-3"><i class="fa-solid fa-clock-rotate-left text-xl"></i></div>
-                <p class="text-[10px] md:text-xs text-slate-500 font-black uppercase tracking-wider">Pindah</p>
-                <h3 class="text-3xl font-black text-slate-900 mt-1">${reschedule}</h3>
-            </div>`;
 
         // Grafik progress untuk admin dan guru
         document.getElementById('grafikProgressSection').classList.remove('hide');
@@ -1799,7 +1755,8 @@ async function loadDashboard() {
 
         await checkMissingSesi();
     } catch (e) {
-        document.getElementById('dashboardStats').innerHTML = '<p class="text-red-500 text-sm col-span-4 font-black bg-red-50 p-4 rounded-2xl border border-red-100 text-center"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Gagal memuat data.</p>';
+        showToast("Gagal memuat data dashboard.", "error");
+        console.error(e);
     }
     await loadLowongan();
     showLoading(false);
