@@ -1814,8 +1814,8 @@ async function loadSiswaOptions() {
         sel.innerHTML = '<option value="">-- Pilih Siswa Didik --</option>';
         dataSiswa.forEach(s => {
             if (currentUser.role === 'guru') {
-                const assigned = (currentUser.assigned_siswa || "").split(',');
-                if (!assigned.includes(s.id_siswa)) return;
+                const assigned = (currentUser.assigned_siswa || "").split(',').map(x => x.trim()).filter(Boolean);
+                if (assigned.length === 0 || !assigned.includes(s.id_siswa.trim())) return;
             }
             sel.innerHTML += `<option value="${s.id_siswa}">${s.nama_siswa} (Sisa: ${s.sisa_sesi ?? 0} Sesi)</option>`;
         });
@@ -2199,8 +2199,8 @@ function populateFilterSiswa() {
     if (currentUser.role === 'admin') sel.innerHTML += `<option value="ALL">Semua Siswa</option>`;
     dataSiswa.forEach(s => {
         if (currentUser.role === 'guru') {
-            const assigned = (currentUser.assigned_siswa || '').split(',');
-            if (!assigned.includes(s.id_siswa)) return;
+            const assigned = (currentUser.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean);
+            if (assigned.length === 0 || !assigned.includes(s.id_siswa.trim())) return;
         }
         sel.innerHTML += `<option value="${s.id_siswa}">${s.nama_siswa}</option>`;
     });
