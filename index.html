@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2025.05.13-v2"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.06.07-v2"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -1732,7 +1732,14 @@ function renderGrafikProgress() {
     const emptyMsg = document.getElementById('grafikEmptyMsg');
     let sesiSelesai = dataSesi.filter(s => s.status_sesi === 'Selesai');
     if (filterGuru !== 'ALL') sesiSelesai = sesiSelesai.filter(s => s.id_guru === filterGuru);
-    if (sesiSelesai.length === 0) {
+
+    // Cek apakah ada data sama sekali (sesi ATAU siswa yang sudah di-assign)
+    const adaAssigned = dataGuru.some(g => {
+        if (filterGuru !== 'ALL' && g.username !== filterGuru) return false;
+        return (g.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean).length > 0;
+    });
+
+    if (sesiSelesai.length === 0 && !adaAssigned) {
         container.innerHTML = '';
         emptyMsg.classList.remove('hide');
         return;
@@ -1756,6 +1763,27 @@ function renderGrafikProgress() {
         Object.values(guruMap).forEach(g => {
             if (g.siswaMap[sw.id_siswa]) {
                 g.siswaMap[sw.id_siswa].paket = selesaiCount + (parseInt(sw.sisa_sesi) || 0);
+            }
+        });
+    });
+
+    // Tambahkan siswa yang sudah di-assign ke guru tapi belum punya sesi sama sekali
+    dataGuru.forEach(g => {
+        if (filterGuru !== 'ALL' && g.username !== filterGuru) return;
+        const assignedIds = (g.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean);
+        assignedIds.forEach(idSiswa => {
+            const siswaObj = dataSiswa.find(x => x.id_siswa === idSiswa);
+            if (!siswaObj) return;
+            if (!guruMap[g.username]) {
+                guruMap[g.username] = { nama_guru: g.nama_lengkap, siswaMap: {} };
+            }
+            if (!guruMap[g.username].siswaMap[idSiswa]) {
+                const selesaiCount = sesiSelesai.filter(s => s.id_siswa === idSiswa).length;
+                guruMap[g.username].siswaMap[idSiswa] = {
+                    nama_siswa: siswaObj.nama_siswa,
+                    count: 0,
+                    paket: selesaiCount + (parseInt(siswaObj.sisa_sesi) || 0)
+                };
             }
         });
     });
