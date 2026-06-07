@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2025.05.13-v1"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2025.05.13-v2"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -1954,7 +1954,7 @@ async function loadDataGuruPage() {
         dataGuru = (await apiCall('getGuru')) || [];
         let html = '';
         dataGuru.forEach(g => {
-            const arr = (g.assigned_siswa || '').split(',').filter(x=>x);
+            const arr = (g.assigned_siswa || '').split(',').map(x=>x.trim()).filter(Boolean);
             const names = arr.map(id => dataSiswa.find(x=>x.id_siswa===id)?.nama_siswa || id).join(', ')
                 || '<span class="text-slate-500 italic text-xs font-bold bg-slate-100 px-2 py-1 rounded-md border border-slate-200">Belum ditugaskan</span>';
             html += `
@@ -2009,8 +2009,8 @@ function editDataGuru(username) {
     document.getElementById('guruUsername').value = data.username;
     document.getElementById('guruPassword').value = data.password;
     document.getElementById('guruNama').value = data.nama_lengkap;
-    const arr = (data.assigned_siswa || '').split(',');
-    document.querySelectorAll('input[name="assignSiswaCb"]').forEach(cb => { cb.checked = arr.includes(cb.value); });
+    const arr = (data.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean);
+    document.querySelectorAll('input[name="assignSiswaCb"]').forEach(cb => { cb.checked = arr.includes(cb.value.trim()); });
     scrollToTop();
 }
 
