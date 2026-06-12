@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2026.06.07-v2"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.06.12-v3"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -30,6 +30,12 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aplikasi Jurnal Les Privat - LBB SAINSPIQ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SAINSPIQ">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
@@ -246,6 +252,44 @@
         .badge-soon { background: #fef9c3; color: #92400e; border: 2px solid #fde047; box-shadow: 0 2px 8px rgba(146,64,14,0.15);}
         
         .grad-text { background: linear-gradient(135deg, #1e3a8a, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* ── PWA INSTALL BUTTON ── */
+        #pwaInstallBtn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 18px;
+            margin-top: 12px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            letter-spacing: 0.02em;
+            text-align: left;
+        }
+        #pwaInstallBtn:hover {
+            background: rgba(255,255,255,0.28);
+            border-color: rgba(255,255,255,0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+        }
+        #pwaInstallBtn .pwa-icon {
+            width: 36px; height: 36px; flex-shrink: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        @keyframes pwaGlow { 0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.3)} 50%{box-shadow:0 0 0 6px rgba(255,255,255,0)} }
+        #pwaInstallBtn { animation: pwaGlow 2.5s ease-in-out infinite; }
     </style>
 </head>
 <body>
@@ -451,6 +495,16 @@
                     MASUK SEKARANG <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
+
+            <!-- PWA Install Button — di LUAR form agar tidak ganggu login -->
+            <button id="pwaInstallBtn" class="hide" onclick="triggerPwaInstall()">
+                <div class="pwa-icon">📲</div>
+                <div style="flex:1">
+                    <div>Install Aplikasi SAINSPIQ</div>
+                    <div style="font-size:11px;font-weight:600;opacity:0.75;margin-top:2px">Sekali klik, langsung ada di layar HP</div>
+                </div>
+                <i class="fa-solid fa-download" style="opacity:0.8;font-size:16px"></i>
+            </button>
 
             <p class="text-center mt-8 text-xs font-bold" style="color:rgba(255,255,255,0.6)">
                 © 2024 LBB SAINSPIQ · All rights reserved
@@ -2417,5 +2471,84 @@ function bukaHalamanPDFWrapper() {
     showToast("PDF terbuka — tekan ⋮ → Download");
 }
 </script>
+
+<!-- ===== PWA INSTALL LOGIC ===== -->
+<script>
+(function () {
+    var deferredPrompt = null;
+
+    // Cek apakah sedang jalan sebagai PWA standalone (sudah terinstall & dibuka via icon)
+    function isStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+    }
+
+    function getBtn() { return document.getElementById('pwaInstallBtn'); }
+
+    function showBtn() {
+        var btn = getBtn();
+        if (btn) btn.classList.remove('hide');
+    }
+
+    function hideBtn() {
+        var btn = getBtn();
+        if (btn) btn.classList.add('hide');
+    }
+
+    // Jika sedang buka via PWA standalone → sembunyikan tombol
+    // Jika buka lewat browser biasa → tombol tetap muncul (meski sudah pernah install)
+    if (isStandalone()) {
+        // Sudah buka via PWA, tombol tidak perlu tampil
+        document.addEventListener('DOMContentLoaded', hideBtn);
+    } else {
+        // Buka via browser biasa → tunggu event beforeinstallprompt dari Chrome
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            showBtn(); // Tampilkan tombol install
+        });
+
+        // iOS Safari: tidak ada beforeinstallprompt, tapi tetap tampilkan tombol panduan
+        if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+            document.addEventListener('DOMContentLoaded', showBtn);
+        }
+    }
+
+    // Setelah berhasil diinstall → sembunyikan tombol di sesi ini
+    window.addEventListener('appinstalled', function () {
+        deferredPrompt = null;
+        hideBtn();
+        if (typeof showToast === 'function') {
+            showToast('✅ Aplikasi SAINSPIQ berhasil diinstall!', 'success');
+        }
+    });
+
+    // Fungsi yang dipanggil saat tombol diklik
+    window.triggerPwaInstall = async function () {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            var result = await deferredPrompt.userChoice;
+            if (result.outcome === 'accepted') {
+                hideBtn();
+            }
+            deferredPrompt = null;
+        } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+            alert('📲 Install di iPhone/iPad:\n\n1. Ketuk ikon Share (kotak + panah ke atas)\n2. Pilih "Tambah ke Layar Utama"\n3. Ketuk "Tambah"');
+        } else {
+            if (typeof showToast === 'function') {
+                showToast('Buka di Chrome untuk bisa install aplikasi', 'error');
+            }
+        }
+    };
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(function () {
+            console.warn('sw.js belum ada — pastikan file sw.js ada di root GitHub Pages');
+        });
+    }
+})();
+</script>
+
 </body>
 </html>
