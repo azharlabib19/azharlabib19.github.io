@@ -599,6 +599,10 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2" id="grafikFilterWrapper">
+                                    <div class="relative">
+                                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-xs"></i></div>
+                                        <input type="text" id="grafikSearchGuru" oninput="renderGrafikProgress()" placeholder="Cari guru..." class="text-sm bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl pl-8 pr-3 py-2.5 font-black outline-none focus:border-blue-500 shadow-sm transition-all w-36">
+                                    </div>
                                     <select id="grafikFilterGuru" onchange="renderGrafikProgress()" class="text-sm bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl px-4 py-2.5 font-black outline-none focus:border-blue-500 shadow-sm cursor-pointer transition-all">
                                         <option value="ALL">Semua Tutor</option>
                                     </select>
@@ -795,6 +799,10 @@
                             <label class="block text-slate-700 font-black mb-3 text-[11px] uppercase tracking-wider flex items-center gap-2">
                                 <div class="label-icon-box bg-emerald-100 border border-emerald-200 text-emerald-700"><i class="fa-solid fa-users"></i></div> Tugaskan Siswa
                             </label>
+                            <div class="relative mb-3">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm"></i></div>
+                                <input type="text" id="searchAssignSiswa" oninput="filterAssignSiswa()" placeholder="Cari nama siswa..." class="w-full pl-11 pr-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-sm font-bold text-slate-800 outline-none focus:border-blue-400 transition-all shadow-sm">
+                            </div>
                             <div id="guruAssignSiswaContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 border-2 border-slate-200 p-5 rounded-2xl bg-slate-50 max-h-64 overflow-y-auto">
                                 <span class="text-sm text-slate-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i> Memuat data siswa...</span>
                             </div>
@@ -1782,6 +1790,7 @@ async function loadDashboard() {
 
 function renderGrafikProgress() {
     const filterGuru = currentUser.role === 'admin' ? (document.getElementById('grafikFilterGuru')?.value || 'ALL') : currentUser.username;
+    const searchGuru = currentUser.role === 'admin' ? (document.getElementById('grafikSearchGuru')?.value?.toLowerCase().trim() || '') : '';
     const container = document.getElementById('grafikProgressContainer');
     const emptyMsg = document.getElementById('grafikEmptyMsg');
     let sesiSelesai = dataSesi.filter(s => s.status_sesi === 'Selesai');
@@ -1842,7 +1851,8 @@ function renderGrafikProgress() {
         });
     });
     const colors = ['linear-gradient(to right, #3b82f6, #60a5fa)', 'linear-gradient(to right, #10b981, #34d399)', 'linear-gradient(to right, #f59e0b, #fbbf24)', 'linear-gradient(to right, #ef4444, #f87171)', 'linear-gradient(to right, #8b5cf6, #a78bfa)', 'linear-gradient(to right, #ec4899, #f472b6)'];
-    const guruKeys = Object.keys(guruMap);
+    let guruKeys = Object.keys(guruMap);
+    if (searchGuru) guruKeys = guruKeys.filter(k => guruMap[k].nama_guru?.toLowerCase().includes(searchGuru));
     let html = '';
     guruKeys.forEach((gKey, gi) => {
         const guru = guruMap[gKey];
