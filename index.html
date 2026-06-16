@@ -1816,7 +1816,7 @@ function renderGrafikProgress() {
         const selesaiCount = sesiSelesai.filter(s => s.id_siswa === sw.id_siswa).length;
         Object.values(guruMap).forEach(g => {
             if (g.siswaMap[sw.id_siswa]) {
-                g.siswaMap[sw.id_siswa].paket = selesaiCount + (parseInt(sw.sisa_sesi) || 0);
+                g.siswaMap[sw.id_siswa].paket = g.siswaMap[sw.id_siswa].count + (parseInt(sw.sisa_sesi) || 0);
             }
         });
     });
@@ -1836,7 +1836,7 @@ function renderGrafikProgress() {
                 guruMap[g.username].siswaMap[idSiswa] = {
                     nama_siswa: siswaObj.nama_siswa,
                     count: 0,
-                    paket: selesaiCount + (parseInt(siswaObj.sisa_sesi) || 0)
+                    paket: parseInt(siswaObj.sisa_sesi) || 0
                 };
             }
         });
