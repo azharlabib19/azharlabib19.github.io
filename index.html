@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2026.06.16-v3"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.06.12-v2"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -565,6 +565,30 @@
                         </div>
                     </div>
 
+                    <!-- Statistik Admin: Guru & Siswa Aktif -->
+                    <div id="adminStatsSection" class="hide grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white rounded-[1.5rem] border-2 border-blue-100 shadow-[0_10px_30px_-10px_rgba(37,99,235,0.15)] p-5 flex items-center gap-4 relative overflow-hidden">
+                            <div class="absolute -top-6 -right-6 w-24 h-24 bg-blue-50 rounded-full blur-2xl opacity-80 pointer-events-none"></div>
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-lg shadow-blue-200 border-2 border-blue-100 flex-shrink-0 relative z-10">
+                                <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                            </div>
+                            <div class="relative z-10">
+                                <p class="text-slate-500 text-[11px] font-black uppercase tracking-wider">Guru Aktif</p>
+                                <p id="statGuruAktif" class="text-slate-900 font-black text-3xl leading-tight">0</p>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-[1.5rem] border-2 border-emerald-100 shadow-[0_10px_30px_-10px_rgba(16,185,129,0.15)] p-5 flex items-center gap-4 relative overflow-hidden">
+                            <div class="absolute -top-6 -right-6 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-80 pointer-events-none"></div>
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-200 border-2 border-emerald-100 flex-shrink-0 relative z-10">
+                                <i class="fa-solid fa-user-graduate text-xl"></i>
+                            </div>
+                            <div class="relative z-10">
+                                <p class="text-slate-500 text-[11px] font-black uppercase tracking-wider">Siswa Aktif</p>
+                                <p id="statSiswaAktif" class="text-slate-900 font-black text-3xl leading-tight">0</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Lowongan Tutor -->
                     <div class="lowongan-card mb-6" id="lowonganSection">
                         <div class="px-6 py-5 flex items-center justify-between bg-white border-b-2 border-slate-100">
@@ -599,10 +623,6 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2" id="grafikFilterWrapper">
-                                    <div class="relative">
-                                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-xs"></i></div>
-                                        <input type="text" id="grafikSearchGuru" oninput="renderGrafikProgress()" placeholder="Cari guru..." class="text-sm bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl pl-8 pr-3 py-2.5 font-black outline-none focus:border-blue-500 shadow-sm transition-all w-36">
-                                    </div>
                                     <select id="grafikFilterGuru" onchange="renderGrafikProgress()" class="text-sm bg-slate-50 border-2 border-slate-200 text-slate-800 rounded-xl px-4 py-2.5 font-black outline-none focus:border-blue-500 shadow-sm cursor-pointer transition-all">
                                         <option value="ALL">Semua Tutor</option>
                                     </select>
@@ -799,10 +819,6 @@
                             <label class="block text-slate-700 font-black mb-3 text-[11px] uppercase tracking-wider flex items-center gap-2">
                                 <div class="label-icon-box bg-emerald-100 border border-emerald-200 text-emerald-700"><i class="fa-solid fa-users"></i></div> Tugaskan Siswa
                             </label>
-                            <div class="relative mb-3">
-                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm"></i></div>
-                                <input type="text" id="searchAssignSiswa" oninput="filterAssignSiswa()" placeholder="Cari nama siswa..." class="w-full pl-11 pr-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-sm font-bold text-slate-800 outline-none focus:border-blue-400 transition-all shadow-sm">
-                            </div>
                             <div id="guruAssignSiswaContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 border-2 border-slate-200 p-5 rounded-2xl bg-slate-50 max-h-64 overflow-y-auto">
                                 <span class="text-sm text-slate-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i> Memuat data siswa...</span>
                             </div>
@@ -1775,8 +1791,12 @@ async function loadDashboard() {
             dataGuru.forEach(g => {
                 guruSel.innerHTML += `<option value="${g.username}">${g.nama_lengkap}</option>`;
             });
+            document.getElementById('adminStatsSection').classList.remove('hide');
+            document.getElementById('statGuruAktif').innerText = dataGuru.length;
+            document.getElementById('statSiswaAktif').innerText = dataSiswa.length;
         } else {
             document.getElementById('grafikFilterWrapper').classList.add('hide');
+            document.getElementById('adminStatsSection').classList.add('hide');
         }
         renderGrafikProgress();
         await checkMissingSesi();
@@ -1790,7 +1810,6 @@ async function loadDashboard() {
 
 function renderGrafikProgress() {
     const filterGuru = currentUser.role === 'admin' ? (document.getElementById('grafikFilterGuru')?.value || 'ALL') : currentUser.username;
-    const searchGuru = currentUser.role === 'admin' ? (document.getElementById('grafikSearchGuru')?.value?.toLowerCase().trim() || '') : '';
     const container = document.getElementById('grafikProgressContainer');
     const emptyMsg = document.getElementById('grafikEmptyMsg');
     let sesiSelesai = dataSesi.filter(s => s.status_sesi === 'Selesai');
@@ -1825,7 +1844,7 @@ function renderGrafikProgress() {
         const selesaiCount = sesiSelesai.filter(s => s.id_siswa === sw.id_siswa).length;
         Object.values(guruMap).forEach(g => {
             if (g.siswaMap[sw.id_siswa]) {
-                g.siswaMap[sw.id_siswa].paket = g.siswaMap[sw.id_siswa].count + (parseInt(sw.sisa_sesi) || 0);
+                g.siswaMap[sw.id_siswa].paket = selesaiCount + (parseInt(sw.sisa_sesi) || 0);
             }
         });
     });
@@ -1845,14 +1864,13 @@ function renderGrafikProgress() {
                 guruMap[g.username].siswaMap[idSiswa] = {
                     nama_siswa: siswaObj.nama_siswa,
                     count: 0,
-                    paket: parseInt(siswaObj.sisa_sesi) || 0
+                    paket: selesaiCount + (parseInt(siswaObj.sisa_sesi) || 0)
                 };
             }
         });
     });
     const colors = ['linear-gradient(to right, #3b82f6, #60a5fa)', 'linear-gradient(to right, #10b981, #34d399)', 'linear-gradient(to right, #f59e0b, #fbbf24)', 'linear-gradient(to right, #ef4444, #f87171)', 'linear-gradient(to right, #8b5cf6, #a78bfa)', 'linear-gradient(to right, #ec4899, #f472b6)'];
-    let guruKeys = Object.keys(guruMap);
-    if (searchGuru) guruKeys = guruKeys.filter(k => guruMap[k].nama_guru?.toLowerCase().includes(searchGuru));
+    const guruKeys = Object.keys(guruMap);
     let html = '';
     guruKeys.forEach((gKey, gi) => {
         const guru = guruMap[gKey];
@@ -2487,7 +2505,6 @@ function bukaHalamanPDFWrapper() {
 (function () {
     var deferredPrompt = null;
 
-    // Cek apakah sedang jalan sebagai PWA standalone (sudah terinstall & dibuka via icon)
     function isStandalone() {
         return window.matchMedia('(display-mode: standalone)').matches
             || window.navigator.standalone === true;
@@ -2497,7 +2514,9 @@ function bukaHalamanPDFWrapper() {
 
     function showBtn() {
         var btn = getBtn();
-        if (btn) btn.classList.remove('hide');
+        if (btn && !isStandalone() && localStorage.getItem('pwa_installed') !== '1') {
+            btn.classList.remove('hide');
+        }
     }
 
     function hideBtn() {
@@ -2505,48 +2524,38 @@ function bukaHalamanPDFWrapper() {
         if (btn) btn.classList.add('hide');
     }
 
-    // Jika sedang buka via PWA standalone → sembunyikan tombol
-    // Jika buka lewat browser biasa → tombol tetap muncul (meski sudah pernah install)
-    if (isStandalone()) {
-        // Sudah buka via PWA, tombol tidak perlu tampil
-        document.addEventListener('DOMContentLoaded', hideBtn);
-    } else {
-        // Buka via browser biasa → tunggu event beforeinstallprompt dari Chrome
-        window.addEventListener('beforeinstallprompt', function (e) {
-            e.preventDefault();
-            deferredPrompt = e;
-            showBtn(); // Tampilkan tombol install
-        });
+    // Tangkap prompt install dari browser (Chrome Android)
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        showBtn();
+    });
 
-        // iOS Safari: tidak ada beforeinstallprompt, tapi tetap tampilkan tombol panduan
-        if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-            document.addEventListener('DOMContentLoaded', showBtn);
-        }
-    }
-
-    // Setelah berhasil diinstall → sembunyikan tombol di sesi ini
+    // Setelah berhasil install
     window.addEventListener('appinstalled', function () {
         deferredPrompt = null;
         hideBtn();
+        localStorage.setItem('pwa_installed', '1');
         if (typeof showToast === 'function') {
             showToast('✅ Aplikasi SAINSPIQ berhasil diinstall!', 'success');
         }
     });
 
-    // Fungsi yang dipanggil saat tombol diklik
+    // Fungsi yang dipanggil tombol
     window.triggerPwaInstall = async function () {
         if (deferredPrompt) {
             deferredPrompt.prompt();
             var result = await deferredPrompt.userChoice;
             if (result.outcome === 'accepted') {
                 hideBtn();
+                localStorage.setItem('pwa_installed', '1');
             }
             deferredPrompt = null;
         } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
             alert('📲 Install di iPhone/iPad:\n\n1. Ketuk ikon Share (kotak + panah ke atas)\n2. Pilih "Tambah ke Layar Utama"\n3. Ketuk "Tambah"');
         } else {
             if (typeof showToast === 'function') {
-                showToast('Buka di Chrome untuk bisa install aplikasi', 'error');
+                showToast('Buka di Chrome untuk install aplikasi', 'error');
             }
         }
     };
@@ -2554,8 +2563,13 @@ function bukaHalamanPDFWrapper() {
     // Register Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(function () {
-            console.warn('sw.js belum ada — pastikan file sw.js ada di root GitHub Pages');
+            console.warn('SW tidak terdaftar — pastikan sw.js ada di root GitHub Pages');
         });
+    }
+
+    // Sudah terinstall? Sembunyikan tombol
+    if (isStandalone() || localStorage.getItem('pwa_installed') === '1') {
+        hideBtn();
     }
 })();
 </script>
