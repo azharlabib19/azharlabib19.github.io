@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2026.07.16-v3"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.07.14-v3"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -592,6 +592,9 @@
                     <!-- Peringatan Siswa Yatim (tercatat di histori/tutor tapi hilang dari Data Siswa) -->
                     <div id="siswaYatimSection" class="hide mb-6"></div>
 
+                    <!-- Panel Guru Belum Input Sesi (potensi "Guru Malas") -->
+                    <div id="guruMalasSection" class="hide mb-6"></div>
+
                     <!-- Lowongan Tutor -->
                     <div class="lowongan-card mb-6" id="lowonganSection">
                         <div class="px-6 py-5 flex items-center justify-between bg-white border-b-2 border-slate-100">
@@ -1174,6 +1177,15 @@ function siswaJadwalHariIni(siswa) {
     let adaH = false, adaT = false;
     if (siswa.jadwal_hari?.trim()) adaH = siswa.jadwal_hari.split(',').map(h=>h.trim()).includes(hariIni);
     if (siswa.jadwal_tanggal?.trim()) adaT = siswa.jadwal_tanggal.split(',').map(t=>parseInt(t.trim())).includes(tglIni);
+    return adaH || adaT;
+}
+
+function siswaJadwalPadaTanggal(siswa, dateObj) {
+    const namaHari = NAMA_HARI[dateObj.getDay()];
+    const tgl = dateObj.getDate();
+    let adaH = false, adaT = false;
+    if (siswa.jadwal_hari?.trim()) adaH = siswa.jadwal_hari.split(',').map(h=>h.trim()).includes(namaHari);
+    if (siswa.jadwal_tanggal?.trim()) adaT = siswa.jadwal_tanggal.split(',').map(t=>parseInt(t.trim())).includes(tgl);
     return adaH || adaT;
 }
 
@@ -1834,6 +1846,7 @@ async function loadDashboard() {
             document.getElementById('adminStatsSection').classList.add('hide');
         }
         renderSiswaYatim();
+        renderGuruMalas();
         renderGrafikProgress();
         await checkMissingSesi();
     } catch (e) {
@@ -1905,6 +1918,93 @@ async function pulihkanSiswaYatim(id, namaTerdeteksi) {
         } catch (e) { showToast("Gagal memulihkan: " + e.message, "error"); }
         showLoading(false);
     });
+}
+
+const HARI_CEK_GURU_MALAS = 7;   // jendela pengamatan (hari ke belakang, tidak termasuk hari ini)
+const BATAS_HARI_GURU_MALAS = 2; // minimal jumlah hari lalai untuk masuk kategori "malas"
+
+function computeGuruMalasData() {
+    const inputSet = new Set(dataSesi.map(s => `${s.id_guru}_${s.id_siswa}_${s.tanggal}`));
+    const now = new Date();
+    const hasil = {};
+    for (let d = 1; d <= HARI_CEK_GURU_MALAS; d++) {
+        const tglObj = new Date(now);
+        tglObj.setDate(now.getDate() - d);
+        const tglStr = tglObj.toISOString().split('T')[0];
+        dataGuru.forEach(g => {
+            const assigned = (g.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean);
+            assigned.forEach(idSiswa => {
+                const siswa = dataSiswa.find(s => s.id_siswa === idSiswa);
+                if (!siswa || !siswaJadwalPadaTanggal(siswa, tglObj)) return;
+                const key = `${g.username}_${idSiswa}_${tglStr}`;
+                if (inputSet.has(key)) return;
+                if (!hasil[g.username]) hasil[g.username] = { nama_guru: g.nama_lengkap, missed: [] };
+                hasil[g.username].missed.push({ tanggal: tglStr, tanggalObj: tglObj, nama_siswa: siswa.nama_siswa });
+            });
+        });
+    }
+    Object.values(hasil).forEach(h => {
+        const tanggalSet = new Set(h.missed.map(m => m.tanggal));
+        h.hariLalai = tanggalSet.size;
+        let streak = 0;
+        for (let d = 1; d <= HARI_CEK_GURU_MALAS; d++) {
+            const tglObj = new Date(now);
+            tglObj.setDate(now.getDate() - d);
+            const tglStr = tglObj.toISOString().split('T')[0];
+            if (tanggalSet.has(tglStr)) streak++; else break;
+        }
+        h.streak = streak;
+    });
+    return hasil;
+}
+
+function renderGuruMalas() {
+    const el = document.getElementById('guruMalasSection');
+    if (currentUser.role !== 'admin') { el.classList.add('hide'); el.innerHTML = ''; return; }
+
+    const data = computeGuruMalasData();
+    const list = Object.values(data).filter(h => h.hariLalai >= BATAS_HARI_GURU_MALAS)
+        .sort((a, b) => (b.streak - a.streak) || (b.hariLalai - a.hariLalai));
+
+    if (list.length === 0) { el.classList.add('hide'); el.innerHTML = ''; return; }
+
+    el.classList.remove('hide');
+    let html = `
+        <div class="bg-rose-50 border-2 border-rose-300 rounded-3xl p-5 shadow-sm">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md"><i class="fa-solid fa-user-clock"></i></div>
+                <div>
+                    <h3 class="font-black text-rose-900 text-sm">Guru Belum Input Sesi (${HARI_CEK_GURU_MALAS} Hari Terakhir)</h3>
+                    <p class="text-rose-800 text-xs font-bold">Sudah punya jadwal tapi belum diisi sama sekali (Selesai/Batal/Reschedule/Libur). Minimal ${BATAS_HARI_GURU_MALAS} hari lalai.</p>
+                </div>
+            </div>
+            <div class="space-y-3">`;
+    list.forEach(h => {
+        const pct = Math.min(100, Math.round((h.hariLalai / HARI_CEK_GURU_MALAS) * 100));
+        const streakBadge = h.streak >= BATAS_HARI_GURU_MALAS
+            ? `<span class="bg-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg"><i class="fa-solid fa-fire"></i> ${h.streak} hari beruntun</span>`
+            : '';
+        const contohMissed = h.missed.slice(0, 4)
+            .map(m => `${m.tanggalObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} (${m.nama_siswa})`)
+            .join(', ');
+        const sisaLain = h.missed.length > 4 ? ` +${h.missed.length - 4} lainnya` : '';
+        html += `
+                <div class="bg-white p-4 rounded-2xl border border-rose-200">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <span class="font-black text-slate-900 text-sm flex items-center gap-2"><i class="fa-solid fa-chalkboard-user text-rose-500"></i> ${h.nama_guru}</span>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            ${streakBadge}
+                            <span class="bg-rose-100 text-rose-700 border border-rose-300 text-[10px] font-black px-2.5 py-1 rounded-lg">${h.hariLalai} / ${HARI_CEK_GURU_MALAS} hari lalai</span>
+                        </div>
+                    </div>
+                    <div class="h-2.5 bg-rose-100 rounded-full overflow-hidden border border-rose-200 mb-2">
+                        <div class="h-full rounded-full bg-rose-500" style="width:${pct}%"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 font-bold">Contoh terlewat: ${contohMissed}${sisaLain}</p>
+                </div>`;
+    });
+    html += `</div></div>`;
+    el.innerHTML = html;
 }
 
 function renderGrafikProgress() {
