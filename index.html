@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2026.07.14-v3"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.07.16-v3"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -588,6 +588,9 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Peringatan Siswa Yatim (tercatat di histori/tutor tapi hilang dari Data Siswa) -->
+                    <div id="siswaYatimSection" class="hide mb-6"></div>
 
                     <!-- Lowongan Tutor -->
                     <div class="lowongan-card mb-6" id="lowonganSection">
@@ -1362,6 +1365,24 @@ async function apiCall(action, payload = {}) {
         else if (action === 'deleteSiswa') {
             const { error } = await dbClient.from('siswa').delete().eq('id_siswa', payload.id_siswa);
             if (error) throw error;
+            // Bersihkan referensi siswa ini dari daftar assigned_siswa semua guru
+            const { data: guruTerkait } = await dbClient.from('users').select('id_user,username,assigned_siswa')
+                .eq('role', 'guru').like('assigned_siswa', `%${payload.id_siswa}%`);
+            if (guruTerkait && guruTerkait.length > 0) {
+                for (const g of guruTerkait) {
+                    const sisa = (g.assigned_siswa || '').split(',').map(x => x.trim()).filter(x => x && x !== payload.id_siswa).join(',');
+                    await dbClient.from('users').update({ assigned_siswa: sisa }).eq('id_user', g.id_user);
+                }
+            }
+            return true;
+        }
+        else if (action === 'restoreSiswa') {
+            const { error } = await dbClient.from('siswa').upsert([{
+                id_siswa: payload.id_siswa, nama_siswa: payload.nama_siswa,
+                program_les: '-', kelas: '', alamat_rumah: '-', sisa_sesi: 0,
+                jadwal_hari: '', jadwal_tanggal: ''
+            }], { onConflict: 'id_siswa' });
+            if (error) throw error;
             return true;
         }
         else if (action === 'getSesi') {
@@ -1812,6 +1833,7 @@ async function loadDashboard() {
             document.getElementById('grafikFilterWrapper').classList.add('hide');
             document.getElementById('adminStatsSection').classList.add('hide');
         }
+        renderSiswaYatim();
         renderGrafikProgress();
         await checkMissingSesi();
     } catch (e) {
@@ -1820,6 +1842,69 @@ async function loadDashboard() {
     }
     await loadLowongan();
     showLoading(false);
+}
+
+function renderSiswaYatim() {
+    const el = document.getElementById('siswaYatimSection');
+    if (currentUser.role !== 'admin') { el.classList.add('hide'); el.innerHTML = ''; return; }
+
+    const knownIds = new Set(dataSiswa.map(s => s.id_siswa));
+    const yatimMap = {};
+
+    dataGuru.forEach(g => {
+        (g.assigned_siswa || '').split(',').map(x => x.trim()).filter(Boolean).forEach(id => {
+            if (!knownIds.has(id) && !yatimMap[id]) yatimMap[id] = { id, nama: null, sumber: 'Ditugaskan ke ' + g.nama_lengkap };
+        });
+    });
+    (dataSesi || []).forEach(s => {
+        if (s.id_siswa && !knownIds.has(s.id_siswa)) {
+            if (!yatimMap[s.id_siswa]) yatimMap[s.id_siswa] = { id: s.id_siswa, nama: s.nama_siswa, sumber: 'Ada histori sesi' };
+            else if (!yatimMap[s.id_siswa].nama) yatimMap[s.id_siswa].nama = s.nama_siswa;
+        }
+    });
+
+    const list = Object.values(yatimMap);
+    if (list.length === 0) { el.classList.add('hide'); el.innerHTML = ''; return; }
+
+    el.classList.remove('hide');
+    let html = `
+        <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div>
+                    <h3 class="font-black text-amber-900 text-sm">Ada Siswa Hilang dari Data Siswa</h3>
+                    <p class="text-amber-800 text-xs font-bold">Nama berikut masih muncul di tutor/histori sesi, tapi datanya tidak ada di halaman Data Siswa. Kemungkinan terhapus tidak sengaja.</p>
+                </div>
+            </div>
+            <div class="space-y-2">`;
+    list.forEach(y => {
+        const namaTampil = y.nama || '(nama tidak diketahui, ID: ' + y.id + ')';
+        html += `
+                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-amber-200">
+                    <div>
+                        <p class="font-black text-slate-800 text-sm">${namaTampil}</p>
+                        <p class="text-[11px] text-slate-500 font-bold">${y.sumber} &middot; ID: ${y.id}</p>
+                    </div>
+                    <button onclick='pulihkanSiswaYatim("${y.id}", "${(y.nama || '').replace(/"/g, '&quot;')}")' class="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow-sm flex items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Pulihkan</button>
+                </div>`;
+    });
+    html += `</div></div>`;
+    el.innerHTML = html;
+}
+
+async function pulihkanSiswaYatim(id, namaTerdeteksi) {
+    showPrompt("Pulihkan Data Siswa", "Konfirmasi nama siswa untuk dipulihkan (ID: " + id + "):", namaTerdeteksi || "", async (nama) => {
+        if (!nama || !nama.trim()) { showToast("Nama tidak boleh kosong!", "error"); return; }
+        showLoading(true, "Memulihkan data siswa...");
+        try {
+            await apiCall('restoreSiswa', { id_siswa: id, nama_siswa: nama.trim() });
+            showToast("Siswa berhasil dipulihkan! Silakan lengkapi datanya di halaman Data Siswa.");
+            dataSiswa = (await apiCall('getSiswa')) || [];
+            renderSiswaYatim();
+            renderGrafikProgress();
+        } catch (e) { showToast("Gagal memulihkan: " + e.message, "error"); }
+        showLoading(false);
+    });
 }
 
 function renderGrafikProgress() {
@@ -1845,12 +1930,13 @@ function renderGrafikProgress() {
     const allSorted = [...dataSesi].filter(s => s.status_sesi === 'Selesai').sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
     allSorted.forEach(s => {
         if (filterGuru !== 'ALL' && s.id_guru !== filterGuru) return;
+        const siswaObj = dataSiswa.find(x => x.id_siswa === s.id_siswa);
+        if (!siswaObj) return; // siswa sudah dihapus dari Data Siswa, jangan tampilkan di Beranda
         const gKey = s.id_guru;
         const sKey = s.id_siswa;
         if (!guruMap[gKey]) guruMap[gKey] = { nama_guru: s.nama_guru, siswaMap: {} };
         if (!guruMap[gKey].siswaMap[sKey]) {
-            const siswaObj = dataSiswa.find(x => x.id_siswa === sKey);
-            guruMap[gKey].siswaMap[sKey] = { nama_siswa: s.nama_siswa, count: 0, paket: siswaObj ? ((siswaObj.sisa_sesi || 0) + 0) : 0 };
+            guruMap[gKey].siswaMap[sKey] = { nama_siswa: s.nama_siswa, count: 0, paket: siswaObj.sisa_sesi || 0 };
         }
         guruMap[gKey].siswaMap[sKey].count++;
     });
