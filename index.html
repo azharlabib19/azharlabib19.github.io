@@ -758,9 +758,15 @@
                     </form>
                     
                     <div class="bg-white rounded-[2rem] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border-2 border-slate-200 overflow-hidden">
-                        <div class="bg-slate-50 px-6 py-5 border-b-2 border-slate-200 flex items-center gap-3">
-                            <div class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center"><i class="fa-solid fa-list-ul text-slate-500"></i></div>
-                            <h3 class="font-black text-slate-800 text-sm tracking-wide uppercase">Daftar Siswa Aktif</h3>
+                        <div class="bg-slate-50 px-6 py-5 border-b-2 border-slate-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center"><i class="fa-solid fa-list-ul text-slate-500"></i></div>
+                                <h3 class="font-black text-slate-800 text-sm tracking-wide uppercase">Daftar Siswa Aktif</h3>
+                            </div>
+                            <div class="relative w-full sm:w-72">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" id="searchSiswa" oninput="filterDataSiswa()" placeholder="Cari nama siswa / program..." class="form-input pl-11 text-sm py-2.5 bg-white">
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="data-table min-w-[600px]">
@@ -832,9 +838,15 @@
                     </form>
 
                     <div class="bg-white rounded-[2rem] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border-2 border-slate-200 overflow-hidden">
-                        <div class="bg-slate-50 px-6 py-5 border-b-2 border-slate-200 flex items-center gap-3">
-                            <div class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center"><i class="fa-solid fa-list-ul text-slate-500"></i></div>
-                            <h3 class="font-black text-slate-800 text-sm tracking-wide uppercase">Daftar Tutor Aktif</h3>
+                        <div class="bg-slate-50 px-6 py-5 border-b-2 border-slate-200 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-white border border-slate-200 rounded-lg flex items-center justify-center"><i class="fa-solid fa-list-ul text-slate-500"></i></div>
+                                <h3 class="font-black text-slate-800 text-sm tracking-wide uppercase">Daftar Tutor Aktif</h3>
+                            </div>
+                            <div class="relative w-full sm:w-72">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" id="searchGuru" oninput="filterDataGuru()" placeholder="Cari nama tutor / username..." class="form-input pl-11 text-sm py-2.5 bg-white">
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="data-table min-w-[600px]">
@@ -1292,7 +1304,8 @@ async function apiCall(action, payload = {}) {
             return data[0];
         }
         else if (action === 'getGuru') {
-            const { data, error } = await dbClient.from('users').select('*').eq('role', 'guru');
+            const { data, error } = await dbClient.from('users').select('*').eq('role', 'guru')
+                .order('nama_lengkap', { ascending: true }).limit(10000);
             if (error) throw error;
             return data || [];
         }
@@ -1324,7 +1337,8 @@ async function apiCall(action, payload = {}) {
             return true;
         }
         else if (action === 'getSiswa') {
-            const { data, error } = await dbClient.from('siswa').select('*');
+            const { data, error } = await dbClient.from('siswa').select('*')
+                .order('nama_siswa', { ascending: true }).limit(10000);
             if (error) throw error;
             return data || [];
         }
@@ -1945,36 +1959,55 @@ async function loadDataSiswaPage() {
     showLoading(true);
     try {
         dataSiswa = (await apiCall('getSiswa')) || [];
-        let html = '';
-        dataSiswa.forEach(s => {
-            const badgeSisa = s.sisa_sesi > 0
-                ? `<span class="bg-gradient-to-r from-emerald-100 to-teal-100 text-teal-800 text-[10px] font-black px-3 py-1.5 rounded-xl border border-teal-300 shadow-sm"><i class="fa-solid fa-layer-group"></i> ${s.sisa_sesi} Sesi</span>`
-                : `<span class="bg-gradient-to-r from-red-100 to-rose-100 text-red-700 text-[10px] font-black px-3 py-1.5 rounded-xl border border-red-300 shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i> Habis!</span>`;
-            const jadwalBadge = siswaJadwalHariIni(s)
-                ? `<div class="bg-emerald-500 text-white border border-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-lg mt-1 inline-block shadow-sm"><i class="fa-solid fa-bolt"></i> HARI INI</div>` : '';
-            html += `
-                <tr>
-                    <td class="p-4 text-sm font-black text-slate-800 whitespace-nowrap">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-xs"><i class="fa-solid fa-user"></i></div>
-                            ${s.nama_siswa}
-                        </div>
-                    </td>
-                    <td class="p-4 text-sm text-slate-600 font-bold whitespace-nowrap">${s.kelas || s.program_les || '-'}</td>
-                    <td class="p-4 text-sm text-slate-600 font-bold leading-tight">${formatJadwal(s)}<br>${jadwalBadge}</td>
-                    <td class="p-4 text-sm whitespace-nowrap">${badgeSisa}</td>
-                    <td class="p-4 text-sm whitespace-nowrap">
-                        <div class="flex gap-2">
-                            <button onclick='topUpSesiSiswa("${s.id_siswa}")' class="w-9 h-9 flex items-center justify-center text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-xl transition hover:bg-emerald-100 shadow-sm" title="Perpanjang Paket"><i class="fa-solid fa-rotate-right"></i></button>
-                            <button onclick='editDataSiswa("${s.id_siswa}")' class="w-9 h-9 flex items-center justify-center text-blue-700 bg-blue-50 border border-blue-300 rounded-xl transition hover:bg-blue-100 shadow-sm" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick='deleteDataSiswa("${s.id_siswa}")' class="w-9 h-9 flex items-center justify-center text-red-600 bg-red-50 border border-red-300 rounded-xl transition hover:bg-red-100 shadow-sm" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                    </td>
-                </tr>`;
-        });
-        document.getElementById('tabelDataSiswa').innerHTML = html || '<tr><td colspan="5" class="text-center p-10 text-slate-500 font-bold text-sm"><div class="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl text-slate-400"></i></div>Belum ada data siswa.</td></tr>';
+        renderTabelSiswa(dataSiswa);
     } catch (e) { }
     showLoading(false);
+}
+
+function renderTabelSiswa(list) {
+    let html = '';
+    list.forEach(s => {
+        const badgeSisa = s.sisa_sesi > 0
+            ? `<span class="bg-gradient-to-r from-emerald-100 to-teal-100 text-teal-800 text-[10px] font-black px-3 py-1.5 rounded-xl border border-teal-300 shadow-sm"><i class="fa-solid fa-layer-group"></i> ${s.sisa_sesi} Sesi</span>`
+            : `<span class="bg-gradient-to-r from-red-100 to-rose-100 text-red-700 text-[10px] font-black px-3 py-1.5 rounded-xl border border-red-300 shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i> Habis!</span>`;
+        const jadwalBadge = siswaJadwalHariIni(s)
+            ? `<div class="bg-emerald-500 text-white border border-emerald-600 text-[9px] font-black px-2 py-0.5 rounded-lg mt-1 inline-block shadow-sm"><i class="fa-solid fa-bolt"></i> HARI INI</div>` : '';
+        html += `
+            <tr>
+                <td class="p-4 text-sm font-black text-slate-800 whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-xs"><i class="fa-solid fa-user"></i></div>
+                        ${s.nama_siswa}
+                    </div>
+                </td>
+                <td class="p-4 text-sm text-slate-600 font-bold whitespace-nowrap">${s.kelas || s.program_les || '-'}</td>
+                <td class="p-4 text-sm text-slate-600 font-bold leading-tight">${formatJadwal(s)}<br>${jadwalBadge}</td>
+                <td class="p-4 text-sm whitespace-nowrap">${badgeSisa}</td>
+                <td class="p-4 text-sm whitespace-nowrap">
+                    <div class="flex gap-2">
+                        <button onclick='topUpSesiSiswa("${s.id_siswa}")' class="w-9 h-9 flex items-center justify-center text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-xl transition hover:bg-emerald-100 shadow-sm" title="Perpanjang Paket"><i class="fa-solid fa-rotate-right"></i></button>
+                        <button onclick='editDataSiswa("${s.id_siswa}")' class="w-9 h-9 flex items-center justify-center text-blue-700 bg-blue-50 border border-blue-300 rounded-xl transition hover:bg-blue-100 shadow-sm" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick='deleteDataSiswa("${s.id_siswa}")' class="w-9 h-9 flex items-center justify-center text-red-600 bg-red-50 border border-red-300 rounded-xl transition hover:bg-red-100 shadow-sm" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </td>
+            </tr>`;
+    });
+    const emptyMsg = dataSiswa.length === 0
+        ? 'Belum ada data siswa.'
+        : 'Tidak ada siswa yang cocok dengan pencarian.';
+    document.getElementById('tabelDataSiswa').innerHTML = html || `<tr><td colspan="5" class="text-center p-10 text-slate-500 font-bold text-sm"><div class="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl text-slate-400"></i></div>${emptyMsg}</td></tr>`;
+}
+
+function filterDataSiswa() {
+    const q = (document.getElementById('searchSiswa').value || '').trim().toLowerCase();
+    if (!q) { renderTabelSiswa(dataSiswa); return; }
+    const filtered = dataSiswa.filter(s =>
+        (s.nama_siswa || '').toLowerCase().includes(q) ||
+        (s.kelas || '').toLowerCase().includes(q) ||
+        (s.program_les || '').toLowerCase().includes(q) ||
+        (s.alamat_rumah || '').toLowerCase().includes(q)
+    );
+    renderTabelSiswa(filtered);
 }
 
 async function handleSaveSiswa(e) {
@@ -2062,35 +2095,52 @@ async function loadDataGuruPage() {
                     <span class="text-slate-800 font-bold">${s.nama_siswa}</span>
                 </label>`).join('');
         dataGuru = (await apiCall('getGuru')) || [];
-        let html = '';
-        dataGuru.forEach(g => {
-            const arr = (g.assigned_siswa || '').split(',').map(x=>x.trim()).filter(Boolean);
-            const names = arr.map(id => dataSiswa.find(x=>x.id_siswa===id)?.nama_siswa || id).join(', ')
-                || '<span class="text-slate-500 italic text-xs font-bold bg-slate-100 px-2 py-1 rounded-md border border-slate-200">Belum ditugaskan</span>';
-            html += `
-                <tr>
-                    <td class="p-4 text-sm font-black text-slate-800 whitespace-nowrap">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200 flex items-center justify-center text-blue-600 text-xs"><i class="fa-solid fa-chalkboard-user"></i></div>
-                            ${g.nama_lengkap}
-                        </div>
-                    </td>
-                    <td class="p-4 text-sm text-slate-500 whitespace-nowrap font-medium">
-                        <div class="font-mono text-[11px] bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md text-slate-800 font-black inline-block"><i class="fa-solid fa-at text-slate-400 mr-1"></i>${g.username}</div>
-                        <div class="font-mono text-[11px] text-slate-500 mt-1 flex items-center font-bold"><i class="fa-solid fa-key mr-1.5 text-[10px] text-slate-400"></i>${g.password}</div>
-                    </td>
-                    <td class="p-4 text-sm text-slate-600 font-bold max-w-xs leading-relaxed">${names}</td>
-                    <td class="p-4 text-sm whitespace-nowrap">
-                        <div class="flex gap-2">
-                            <button onclick='editDataGuru("${g.username}")' class="w-9 h-9 flex items-center justify-center text-blue-700 bg-blue-50 border border-blue-300 rounded-xl transition hover:bg-blue-100 shadow-sm" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick='deleteDataGuru("${g.username}")' class="w-9 h-9 flex items-center justify-center text-red-600 bg-red-50 border border-red-300 rounded-xl transition hover:bg-red-100 shadow-sm" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                    </td>
-                </tr>`;
-        });
-        document.getElementById('tabelDataGuru').innerHTML = html || '<tr><td colspan="4" class="text-center p-10 text-slate-500 font-bold text-sm"><div class="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl text-slate-400"></i></div>Belum ada data tutor.</td></tr>';
+        renderTabelGuru(dataGuru);
     } catch (e) { }
     showLoading(false);
+}
+
+function renderTabelGuru(list) {
+    let html = '';
+    list.forEach(g => {
+        const arr = (g.assigned_siswa || '').split(',').map(x=>x.trim()).filter(Boolean);
+        const names = arr.map(id => dataSiswa.find(x=>x.id_siswa===id)?.nama_siswa || id).join(', ')
+            || '<span class="text-slate-500 italic text-xs font-bold bg-slate-100 px-2 py-1 rounded-md border border-slate-200">Belum ditugaskan</span>';
+        html += `
+            <tr>
+                <td class="p-4 text-sm font-black text-slate-800 whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200 flex items-center justify-center text-blue-600 text-xs"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        ${g.nama_lengkap}
+                    </div>
+                </td>
+                <td class="p-4 text-sm text-slate-500 whitespace-nowrap font-medium">
+                    <div class="font-mono text-[11px] bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md text-slate-800 font-black inline-block"><i class="fa-solid fa-at text-slate-400 mr-1"></i>${g.username}</div>
+                    <div class="font-mono text-[11px] text-slate-500 mt-1 flex items-center font-bold"><i class="fa-solid fa-key mr-1.5 text-[10px] text-slate-400"></i>${g.password}</div>
+                </td>
+                <td class="p-4 text-sm text-slate-600 font-bold max-w-xs leading-relaxed">${names}</td>
+                <td class="p-4 text-sm whitespace-nowrap">
+                    <div class="flex gap-2">
+                        <button onclick='editDataGuru("${g.username}")' class="w-9 h-9 flex items-center justify-center text-blue-700 bg-blue-50 border border-blue-300 rounded-xl transition hover:bg-blue-100 shadow-sm" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick='deleteDataGuru("${g.username}")' class="w-9 h-9 flex items-center justify-center text-red-600 bg-red-50 border border-red-300 rounded-xl transition hover:bg-red-100 shadow-sm" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </td>
+            </tr>`;
+    });
+    const emptyMsg = dataGuru.length === 0
+        ? 'Belum ada data tutor.'
+        : 'Tidak ada tutor yang cocok dengan pencarian.';
+    document.getElementById('tabelDataGuru').innerHTML = html || `<tr><td colspan="4" class="text-center p-10 text-slate-500 font-bold text-sm"><div class="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl text-slate-400"></i></div>${emptyMsg}</td></tr>`;
+}
+
+function filterDataGuru() {
+    const q = (document.getElementById('searchGuru').value || '').trim().toLowerCase();
+    if (!q) { renderTabelGuru(dataGuru); return; }
+    const filtered = dataGuru.filter(g =>
+        (g.nama_lengkap || '').toLowerCase().includes(q) ||
+        (g.username || '').toLowerCase().includes(q)
+    );
+    renderTabelGuru(filtered);
 }
 
 async function handleSaveGuru(e) {
