@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2026.07.14-v3"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.07.16-v4"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -1737,8 +1737,22 @@ async function initApp() {
     buildNavigation();
     dataSiswa = (await apiCall('getSiswa')) || [];
     dataGuru = (await apiCall('getGuru')) || [];
+    refreshCurrentUserFromServer();
     loadSiswaOptions();
     navigate('dashboard');
+}
+
+// Menyamakan currentUser (termasuk assigned_siswa milik tutor) dengan data terbaru
+// dari database. Sebelumnya currentUser hanya diambil sekali dari localStorage saat
+// login, jadi kalau admin menambah/mengubah siswa yang ditugaskan ke tutor setelah
+// tutor login, HP tutor tidak akan tahu perubahan itu sampai logout lalu login lagi.
+function refreshCurrentUserFromServer() {
+    if (!currentUser || currentUser.role !== 'guru') return;
+    const fresh = dataGuru.find(g => g.username === currentUser.username);
+    if (fresh) {
+        currentUser = fresh;
+        localStorage.setItem('les_user', JSON.stringify(currentUser));
+    }
 }
 
 // ============================================================
@@ -1830,6 +1844,8 @@ async function loadDashboard() {
         dataSesi = (await apiCall('getSesi')) || [];
         dataSiswa = (await apiCall('getSiswa')) || [];
         dataGuru = (await apiCall('getGuru')) || [];
+        refreshCurrentUserFromServer();
+        loadSiswaOptions();
         document.getElementById('grafikProgressSection').classList.remove('hide');
         if (currentUser.role === 'admin') {
             document.getElementById('grafikFilterWrapper').classList.remove('hide');
@@ -1869,12 +1885,12 @@ function renderSiswaYatim() {
             if (!knownIds.has(id) && !yatimMap[id]) yatimMap[id] = { id, nama: null, sumber: 'Ditugaskan ke ' + g.nama_lengkap };
         });
     });
-    (dataSesi || []).forEach(s => {
-        if (s.id_siswa && !knownIds.has(s.id_siswa)) {
-            if (!yatimMap[s.id_siswa]) yatimMap[s.id_siswa] = { id: s.id_siswa, nama: s.nama_siswa, sumber: 'Ada histori sesi' };
-            else if (!yatimMap[s.id_siswa].nama) yatimMap[s.id_siswa].nama = s.nama_siswa;
-        }
-    });
+    // Catatan: dulu ada juga pengecekan dari riwayat sesi (dataSesi), tapi itu membuat
+    // siswa yang MEMANG SENGAJA dihapus akan terus-menerus muncul di sini selamanya
+    // (karena histori sesi lama tidak pernah hilang). Sekarang deteksi "siswa hilang"
+    // hanya berdasarkan referensi assigned_siswa milik guru yang belum sempat
+    // dibersihkan (misal data lama sebelum ada auto-cleanup di deleteSiswa),
+    // sehingga siswa yang dihapus lewat tombol Hapus akan langsung hilang dari Beranda.
 
     const list = Object.values(yatimMap);
     if (list.length === 0) { el.classList.add('hide'); el.innerHTML = ''; return; }
