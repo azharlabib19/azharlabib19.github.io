@@ -210,6 +210,9 @@
         .data-table tbody tr { transition: all 0.2s; }
         .data-table tbody tr td { border-bottom: 1px dashed #e2e8f0; padding: 16px; font-size: 13.5px; }
         .data-table tbody tr:hover td { background: #f1f5f9; }
+        .sticky-col { position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 2px 0 6px rgba(0,0,0,0.06); }
+        .data-table thead .sticky-col { background: #f8fafc; z-index: 3; }
+        .data-table tbody tr:hover .sticky-col { background: #f1f5f9; }
 
         /* Animations */
         @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -1064,15 +1067,23 @@
 
                     <!-- Riwayat -->
                     <div class="mt-8">
-                        <h3 class="text-xl font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
-                            <div class="w-12 h-12 rounded-xl bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center shadow-sm"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
-                            Riwayat Jurnal Keseluruhan
-                        </h3>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                            <h3 class="text-xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+                                <div class="w-12 h-12 rounded-xl bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center shadow-sm"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
+                                Riwayat Jurnal Keseluruhan
+                            </h3>
+                            <div id="bulkDeleteBar" class="hide items-center gap-3 bg-red-50 border-2 border-red-300 rounded-2xl px-5 py-3 shadow-sm">
+                                <span class="text-sm font-black text-red-700"><span id="bulkDeleteCount">0</span> sesi dipilih</span>
+                                <button onclick="bulkDeleteSesi()" class="bg-red-600 hover:bg-red-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-trash-can"></i> Hapus Terpilih</button>
+                                <button onclick="cancelBulkSelect()" class="bg-white border border-slate-300 text-slate-600 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-50 transition">Batal</button>
+                            </div>
+                        </div>
                         <div class="bg-white rounded-[2rem] shadow-xl border-2 border-slate-200 overflow-hidden">
                             <div class="overflow-x-auto p-2">
                                 <table class="data-table min-w-[700px]">
                                     <thead>
                                         <tr>
+                                            <th class="w-12 sticky-col"><input type="checkbox" id="checkAllRiwayat" onchange="toggleAllRiwayat(this)" class="w-5 h-5 cursor-pointer accent-red-600"></th>
                                             <th>Tanggal</th>
                                             <th>Siswa</th>
                                             <th>Tutor</th>
@@ -2505,6 +2516,7 @@ async function loadRiwayat() {
         };
         const filteredSorted = [...filtered].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
         let html = '';
+        selectedSesiIds.clear();
         filteredSorted.forEach(s => {
             const badge = statusColors[s.status_sesi] || 'bg-slate-50 text-slate-600';
             const canEdit = currentUser.role === 'admin' || currentUser.username === s.id_guru;
@@ -2514,6 +2526,7 @@ async function loadRiwayat() {
                 : `<span class="text-slate-400 text-[11px] italic font-bold">—</span>`;
             html += `
                 <tr>
+                    <td class="p-4 text-sm whitespace-nowrap sticky-col">${canEdit ? `<input type="checkbox" class="riwayat-checkbox w-5 h-5 cursor-pointer accent-red-600" value="${s.id_sesi}" onchange="toggleRiwayatCheck('${s.id_sesi}', this.checked)">` : ''}</td>
                     <td class="p-4 text-sm text-slate-700 font-bold whitespace-nowrap"><i class="fa-regular fa-calendar mr-2 text-slate-400"></i> ${s.tanggal}</td>
                     <td class="p-4 text-sm font-black text-slate-900 whitespace-nowrap">${s.nama_siswa}</td>
                     <td class="p-4 text-sm text-slate-600 font-bold whitespace-nowrap"><i class="fa-solid fa-chalkboard-user mr-2 text-slate-400"></i> ${s.nama_guru}</td>
@@ -2527,7 +2540,8 @@ async function loadRiwayat() {
                     </td>
                 </tr>`;
         });
-        document.getElementById('tabelRiwayat').innerHTML = html || '<tr><td colspan="6" class="text-center p-10 text-slate-500 font-bold text-sm"><div class="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl text-slate-400"></i></div>Belum ada riwayat jurnal.</td></tr>';
+        document.getElementById('tabelRiwayat').innerHTML = html || '<tr><td colspan="7" class="text-center p-10 text-slate-500 font-bold text-sm"><div class="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-folder-open text-2xl text-slate-400"></i></div>Belum ada riwayat jurnal.</td></tr>';
+        updateBulkBar();
     } catch (e) { console.error(e); }
     showLoading(false);
 }
@@ -2551,6 +2565,62 @@ async function deleteSesi(id) {
             showToast("Sesi dihapus.");
             loadRiwayat();
         } catch (e) { showToast("Gagal: " + e.message, "error"); }
+        showLoading(false);
+    });
+}
+
+// ============================================================
+// BULK DELETE RIWAYAT (centang banyak sesi sekaligus)
+// ============================================================
+let selectedSesiIds = new Set();
+
+function toggleRiwayatCheck(id, checked) {
+    if (checked) selectedSesiIds.add(id); else selectedSesiIds.delete(id);
+    updateBulkBar();
+}
+
+function toggleAllRiwayat(el) {
+    document.querySelectorAll('.riwayat-checkbox').forEach(cb => {
+        cb.checked = el.checked;
+        if (el.checked) selectedSesiIds.add(cb.value); else selectedSesiIds.delete(cb.value);
+    });
+    updateBulkBar();
+}
+
+function updateBulkBar() {
+    const bar = document.getElementById('bulkDeleteBar');
+    const count = selectedSesiIds.size;
+    document.getElementById('bulkDeleteCount').innerText = count;
+    bar.classList.toggle('hide', count === 0);
+    bar.classList.toggle('flex', count > 0);
+    const checkAll = document.getElementById('checkAllRiwayat');
+    if (checkAll) {
+        const boxes = document.querySelectorAll('.riwayat-checkbox');
+        checkAll.checked = boxes.length > 0 && count === boxes.length;
+        checkAll.indeterminate = count > 0 && count < boxes.length;
+    }
+}
+
+function cancelBulkSelect() {
+    selectedSesiIds.clear();
+    document.querySelectorAll('.riwayat-checkbox').forEach(cb => cb.checked = false);
+    updateBulkBar();
+}
+
+async function bulkDeleteSesi() {
+    if (selectedSesiIds.size === 0) return;
+    const ids = Array.from(selectedSesiIds);
+    showConfirm('Hapus Sesi Terpilih', `${ids.length} sesi akan dihapus dan sisa paket dikalkulasi ulang.`, async () => {
+        showLoading(true, `Menghapus ${ids.length} sesi...`);
+        let gagal = 0;
+        for (const id of ids) {
+            try { await apiCall('deleteSesi', { id_sesi: id }); }
+            catch (e) { gagal++; console.error(e); }
+        }
+        selectedSesiIds.clear();
+        if (gagal === 0) showToast(`${ids.length} sesi berhasil dihapus.`);
+        else showToast(`${ids.length - gagal} sesi dihapus, ${gagal} gagal.`, gagal === ids.length ? "error" : "success");
+        loadRiwayat();
         showLoading(false);
     });
 }
