@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-        const APP_VERSION = "2026.07.16-v4"; // ← GANTI INI setiap push update ke GitHub
+        const APP_VERSION = "2026.08.1-v5"; // ← GANTI INI setiap push update ke GitHub
 
         const savedVersion = localStorage.getItem('app_version');
         if (savedVersion !== APP_VERSION) {
@@ -1072,10 +1072,13 @@
                                 <div class="w-12 h-12 rounded-xl bg-slate-200 border border-slate-300 text-slate-700 flex items-center justify-center shadow-sm"><i class="fa-solid fa-clock-rotate-left text-lg"></i></div>
                                 Riwayat Jurnal Keseluruhan
                             </h3>
-                            <div id="bulkDeleteBar" class="hide items-center gap-3 bg-red-50 border-2 border-red-300 rounded-2xl px-5 py-3 shadow-sm">
-                                <span class="text-sm font-black text-red-700"><span id="bulkDeleteCount">0</span> sesi dipilih</span>
-                                <button onclick="bulkDeleteSesi()" class="bg-red-600 hover:bg-red-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-trash-can"></i> Hapus Terpilih</button>
-                                <button onclick="cancelBulkSelect()" class="bg-white border border-slate-300 text-slate-600 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-50 transition">Batal</button>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div id="bulkDeleteBar" class="hide items-center gap-3 bg-red-50 border-2 border-red-300 rounded-2xl px-5 py-3 shadow-sm">
+                                    <span class="text-sm font-black text-red-700"><span id="bulkDeleteCount">0</span> sesi dipilih</span>
+                                    <button onclick="bulkDeleteSesi()" class="bg-red-600 hover:bg-red-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2"><i class="fa-solid fa-trash-can"></i> Hapus Terpilih</button>
+                                    <button onclick="cancelBulkSelect()" class="bg-white border border-slate-300 text-slate-600 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-slate-50 transition">Batal</button>
+                                </div>
+                                <button id="btnCleanOrphan" onclick="cleanOrphanSesi()" class="hide bg-amber-50 border-2 border-amber-300 text-amber-700 font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-amber-100 transition items-center gap-2" title="Hapus riwayat sesi milik siswa yang datanya sudah terhapus"><i class="fa-solid fa-broom"></i> Bersihkan Riwayat Yatim</button>
                             </div>
                         </div>
                         <div class="bg-white rounded-[2rem] shadow-xl border-2 border-slate-200 overflow-hidden">
@@ -1388,6 +1391,8 @@ async function apiCall(action, payload = {}) {
         else if (action === 'deleteSiswa') {
             const { error } = await dbClient.from('siswa').delete().eq('id_siswa', payload.id_siswa);
             if (error) throw error;
+            // Ikut hapus semua riwayat sesi/jurnal milik siswa ini (cascade)
+            await dbClient.from('sesi_les').delete().eq('id_siswa', payload.id_siswa);
             // Bersihkan referensi siswa ini dari daftar assigned_siswa semua guru
             const { data: guruTerkait } = await dbClient.from('users').select('id_user,username,assigned_siswa')
                 .eq('role', 'guru').like('assigned_siswa', `%${payload.id_siswa}%`);
@@ -1454,6 +1459,17 @@ async function apiCall(action, payload = {}) {
             const { error } = await dbClient.from('sesi_les').delete().eq('id_sesi', payload.id_sesi);
             if (error) throw error;
             return true;
+        }
+        else if (action === 'cleanOrphanSesi') {
+            const { data: siswaData } = await dbClient.from('siswa').select('id_siswa');
+            const validIds = new Set((siswaData || []).map(s => s.id_siswa));
+            const { data: sesiData } = await dbClient.from('sesi_les').select('id_sesi,id_siswa');
+            const orphanIds = (sesiData || []).filter(s => !validIds.has(s.id_siswa)).map(s => s.id_sesi);
+            if (orphanIds.length > 0) {
+                const { error } = await dbClient.from('sesi_les').delete().in('id_sesi', orphanIds);
+                if (error) throw error;
+            }
+            return orphanIds.length;
         }
         else if (action === 'getLowongan') {
             const { data, error } = await dbClient.from('lowongan_tutor').select('*').order('created_at', { ascending: false });
@@ -1744,6 +1760,8 @@ async function initApp() {
         document.getElementById('btnEditBanner').classList.remove('hide');
         document.getElementById('btnTambahLowongan').classList.remove('hide');
         document.getElementById('btnEditRekapBanner').classList.remove('hide');
+        document.getElementById('btnCleanOrphan').classList.remove('hide');
+        document.getElementById('btnCleanOrphan').classList.add('flex');
     }
     buildNavigation();
     dataSiswa = (await apiCall('getSiswa')) || [];
@@ -2258,11 +2276,11 @@ function editDataSiswa(id) {
 }
 
 async function deleteDataSiswa(id) {
-    showConfirm("Hapus Data Siswa", "Data siswa akan dihapus permanen.", async () => {
+    showConfirm("Hapus Data Siswa", "Data siswa DAN seluruh riwayat sesi/jurnalnya akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.", async () => {
         showLoading(true);
         try {
             await apiCall('deleteSiswa', { id_siswa: id });
-            showToast("Data siswa dihapus.");
+            showToast("Data siswa & riwayat sesinya dihapus.");
             loadDataSiswaPage(); loadSiswaOptions();
         } catch (e) { showToast("Gagal: " + e.message, "error"); }
         showLoading(false);
@@ -2621,6 +2639,19 @@ async function bulkDeleteSesi() {
         if (gagal === 0) showToast(`${ids.length} sesi berhasil dihapus.`);
         else showToast(`${ids.length - gagal} sesi dihapus, ${gagal} gagal.`, gagal === ids.length ? "error" : "success");
         loadRiwayat();
+        showLoading(false);
+    });
+}
+
+async function cleanOrphanSesi() {
+    showConfirm('Bersihkan Riwayat Yatim', 'Sistem akan mencari sesi yang masih terhubung ke siswa yang datanya sudah terhapus, lalu menghapus permanen sesi-sesi tersebut. Lanjutkan?', async () => {
+        showLoading(true, 'Memindai riwayat yatim...');
+        try {
+            const count = await apiCall('cleanOrphanSesi', {});
+            if (count > 0) showToast(`${count} riwayat sesi yatim berhasil dibersihkan.`);
+            else showToast('Tidak ada riwayat yatim ditemukan. Data sudah bersih.');
+            loadRiwayat();
+        } catch (e) { showToast('Gagal: ' + e.message, 'error'); }
         showLoading(false);
     });
 }
